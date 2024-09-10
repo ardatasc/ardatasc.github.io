@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="vim-as-a-go-golang-ide-using-lsp-and-vim-go">Vim as a Go (Golang) IDE using LSP and vim-go</h1>
+<p>It is 2019 and there are many great ways to write Go.
+<a href="https://web.archive.org/web/20240228152359/https://www.jetbrains.com/go">Goland</a> is available for Intellij users, <a href="https://web.archive.org/web/20240228152359/https://code.visualstudio.com/">Visual
+Studio Code</a> (VSCode) is an incredibly enjoyable
+editor / IDE, and of course, Vim. I am no Vim-purist, I think if you are more
+productive in a different tool you should use it. But Vim remains a great
+multi-purpose tool in 2019+. Traditionally, writing Go in Vim meant adding the
+<a href="https://web.archive.org/web/20240228152359/https://github.com/fatih/vim-go">vim-go</a> plugin and coding away. Today,
+<code>vim-go</code> remains a great plugin, but with the introduction of the <a href="https://web.archive.org/web/20240228152359/https://langserver.org/">Language
+Server Protocol</a> (LSP), there are new options worth
+exploring.</p>
+<b><a href="https://web.archive.org/web/20240228152359/https://youtu.be/T32yqetyy8s">Click here to watch the video version of this content.</a></b>
+<h2 id="the-past-and-the-present">The Past and The Present</h2>
+<p>Before LSPs, we <em>generally</em> used <a href="https://web.archive.org/web/20240228152359/https://github.com/nsf/gocode">gocode</a>, one of
+the many tools packaged in <code>vim-go</code>. I personally had a love-hate relationship
+with it. Namely, I found small changes in my environment could break it.
+Additionally, Go <code>1.10</code> changed the binary package architecture breaking
+<code>gocode</code>. Eventually the community moved to a
+<a href="https://web.archive.org/web/20240228152359/https://github.com/mdempsky/gocode">fork</a>. Then, Go <code>1.11</code> introduced <a href="https://web.archive.org/web/20240228152359/https://blog.golang.org/modules2019">Go
+modules</a>, so we moved to <a href="https://web.archive.org/web/20240228152359/https://github.com/stamblerre/gocode">another
+fork</a>. I am super thankful for the
+awesomeness <code>gocode</code> brought us over the years. And I am very happy to see LSPs
+providing convergence for how editors/IDEs support programming languages.</p>
+<p>Go's official LSP is <a href="https://web.archive.org/web/20240228152359/https://github.com/golang/go/wiki/gopls">gopls</a>,
+pronounced &quot;go please&quot;.</p>
+<p>vim-go <code>1.20</code> (April 22, 2019) introduced <code>gopls</code> support. Autocomplete now uses
+<code>gopls</code> by default. <code>vim-go</code> commands <code>:GoDef</code> and <code>:GoInfo</code> can also be set to
+use <code>gopls</code> if you add the following configuration.</p>
+<pre tabindex="0"><code>let g:go_def_mode=&#39;gopls&#39;
+let g:go_info_mode=&#39;gopls&#39;
+</code></pre><p>This means, triggering omnifunc <code>&lt;C-r&gt;&lt;C-o&gt;</code>, will make a call out to <code>gopls</code>.</p>
+<p>While this is great, my <strong>preference</strong> is to limit the concerns of <code>vim-go</code> to
+go-tool specific tasks such as <code>build</code>, <code>run</code>, <code>doc</code>, etc. Then, use an LSP
+client to handle autocompletion and traversing code (e.g. going to a
+definition). This maintains consistency in how these tasks are executed across
+languages without new plugins. All you need is a language server. The breakdown
+of responsibilities is as follows.</p>
+<a href="https://web.archive.org/web/20240228152359/https://octetz.s3.us-east-2.amazonaws.com/vim-go-resp.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228152359im_/https://octetz.s3.us-east-2.amazonaws.com/vim-go-resp.png">
+</a>
+<p>The two best client options are <a href="https://web.archive.org/web/20240228152359/https://github.com/neoclide/coc.nvim">Conquer of Completion
+(coc.nvim)</a> and
+<a href="https://web.archive.org/web/20240228152359/https://github.com/autozimu/LanguageClient-neovim">LanguageClient-neovim</a>. I
+recently switched to <code>coc.nvim</code>; that is what this tutorial covers. However,
+LanguageClient-neovim is an excellent LSP client. Arguably more minimal (and
+written in rust!). A benefit that sold me on <code>coc.nvim</code>'s is the ability to
+leverage VSCode plugins.</p>
+<p>The following details my Vim setup for Go in 2019 and why Vim is still my tool
+of choice.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>In order to follow this setup, you need to complete following.</p>
+<ul>
+<li>
+<p><a href="https://web.archive.org/web/20240228152359/https://github.com/neovim/neovim/wiki/Installing-Neovim">Neovim</a> installed</p>
+<ul>
+<li>I use Neovim instead of Vim, however, much of this tutorial can be done in
+Vim 8. Should you choose Vim, configuration file locations will vary.</li>
+</ul>
+</li>
+<li>
+<p><a href="https://web.archive.org/web/20240228152359/https://github.com/junegunn/vim-plug">vim-plug</a> installed</p>
+<ul>
+<li>Manages Vim plugins in simple and minimal manner.</li>
+</ul>
+</li>
+<li>
+<p><a href="https://web.archive.org/web/20240228152359/https://yarnpkg.com/en/docs/install">yarn</a> installed</p>
+<ul>
+<li>Required by the autocomplete tooling
+<a href="https://web.archive.org/web/20240228152359/https://github.com/neoclide/coc.nvim">coc.nvim</a>.</li>
+</ul>
+</li>
+<li>
+<p><code>$GOPATH</code> and <code>$GOBIN</code> set</p>
+<ul>
+<li>See
+<a href="https://web.archive.org/web/20240228152359/https://golang.org/cmd/go/#hdr-Environment_variables">https://golang.org/cmd/go/#hdr-Environment_variables</a></li>
+<li>These are not required, but I like them, and the examples will use them.</li>
+<li>You may also want to append <code>$GOBIN</code> onto your <code>$PATH</code>.</li>
+</ul>
+</li>
+<li>
+<p><code>~/.config/nvim/init.vim</code> created</p>
+<ul>
+<li>This is the <code>.vimrc</code> of Neovim.</li>
+</ul>
+</li>
+</ul>
+<h2 id="installing-vim-go">Installing vim-go</h2>
+<ol>
+<li>
+<p>Edit <code>init.vim</code>.</p>
+<pre tabindex="0"><code>vim ~/.config/nvim/init.vim
+</code></pre><p><em><code>vim</code> maps to <code>nvim</code> in my system.</em></p>
+</li>
+<li>
+<p>Add the <code>vim-go</code> plugin to the list of plugins managed by vim-plug.</p>
+<pre tabindex="0"><code>call plug#begin(&#39;~/.vim/plugged&#39;)
+
+&#34; &lt; Other Plugins, if they exist &gt;
+
+Plug &#39;fatih/vim-go&#39;
+call plug#end()
+</code></pre></li>
+<li>
+<p>Save and exit Vim.</p>
+</li>
+<li>
+<p>Run <code>PlugInstall</code> via Vim.</p>
+<pre tabindex="0"><code>vim +PlugInstall
+</code></pre><p>output:</p>
+<pre tabindex="0"><code>Updated. Elapsed time: 0.011105 sec.
+[=]
+
+- Finishing ... Done!
+- vim-go: Installed
+</code></pre></li>
+<li>
+<p>Run <code>GoInstallBinaries</code> via Vim.</p>
+<pre tabindex="0"><code>vim +GoInstallBinaries
+</code></pre></li>
+<li>
+<p>Verify tools are in $GOBIN.</p>
+<pre tabindex="0"><code>ls -la $GOBIN
+</code></pre><p>output:</p>
+<pre tabindex="0"><code>asmfmt
+errcheck
+fillstruct
+gocode
+gocode-gomod
+godef
+gogetdoc
+goimports
+golangci-lint
+golint
+gometalinter
+gomodifytags
+gopls
+gorename
+gotags
+guru
+iferr
+impl
+keyify
+motion
+</code></pre><p><em>These binaries will be called by various commands in <code>vim-go</code>. Note that
+<code>gopls</code> was installed. Your LSP client will point to this binary.</em></p>
+</li>
+<li>
+<p>Download a Go-based project.</p>
+<pre tabindex="0"><code>go get -d github.com/heptio/velero
+</code></pre><ul>
+<li><code>-d</code>: Instruct <code>go</code> to not install the package.</li>
+</ul>
+</li>
+<li>
+<p>Enter the project's directory.</p>
+<pre tabindex="0"><code>cd $GOPATH/src/github.com/heptio/velero
+</code></pre></li>
+<li>
+<p>Vim into a Go file.</p>
+<pre tabindex="0"><code>vim cmd/velero/main.go
+</code></pre></li>
+<li>
+<p>Try some of the following commands to verify <code>vim-go</code> is working.</p>
+<ul>
+<li><code>:GoDoc</code> (or <code>shift + K</code>) over a symbol to get the documention in a Vim buffer.</li>
+<li><code>:GoDef</code> go to definition (soon to be replaced by LSP client).</li>
+<li><code>:GoDocBrowser</code> over a symbol to open godoc.org.</li>
+<li><code>:GoBuild</code> to build the project.</li>
+</ul>
+</li>
+</ol>
+<a href="https://web.archive.org/web/20240228152359/https://octetz.s3.us-east-2.amazonaws.com/vim-go.gif" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228152359im_/https://octetz.s3.us-east-2.amazonaws.com/vim-go.gif">
+</a>
+<h2 id="installing-cocnvim">Installing coc.nvim</h2>
+<ol>
+<li>
+<p>Edit <code>init.vim</code>.</p>
+<pre tabindex="0"><code>vim ~/.config/nvim/init.vim
+</code></pre></li>
+<li>
+<p>Update your plugin list in <code>~/.config/nvim/init.vim</code> to contain the following.</p>
+<pre tabindex="0"><code>call plug#begin(&#39;~/.vim/plugged&#39;)
+
+&#34; &lt; Other Plugins, if they exist &gt;
+
+Plug &#39;fatih/vim-go&#39;
+Plug &#39;neoclide/coc.nvim&#39;, {&#39;do&#39;: &#39;yarn install --frozen-lockfile&#39;}
+call plug#end()
+</code></pre></li>
+<li>
+<p>Copy the following into your <code>init.vim</code>.</p>
+<pre tabindex="0"><code>&#34; -------------------------------------------------------------------------------------------------
+&#34; coc.nvim default settings
+&#34; -------------------------------------------------------------------------------------------------
+
+&#34; if hidden is not set, TextEdit might fail.
+set hidden
+&#34; Better display for messages
+set cmdheight=2
+&#34; Smaller updatetime for CursorHold &amp; CursorHoldI
+set updatetime=300
+&#34; don&#39;t give |ins-completion-menu| messages.
+set shortmess+=c
+&#34; always show signcolumns
+set signcolumn=yes
+
+&#34; Use tab for trigger completion with characters ahead and navigate.
+&#34; Use command &#39;:verbose imap &lt;tab&gt;&#39; to make sure tab is not mapped by other plugin.
+inoremap &lt;silent&gt;&lt;expr&gt; &lt;TAB&gt;
+      \ pumvisible() ? &#34;\&lt;C-n&gt;&#34; :
+      \ &lt;SID&gt;check_back_space() ? &#34;\&lt;TAB&gt;&#34; :
+      \ coc#refresh()
+inoremap &lt;expr&gt;&lt;S-TAB&gt; pumvisible() ? &#34;\&lt;C-p&gt;&#34; : &#34;\&lt;C-h&gt;&#34;
+
+function! s:check_back_space() abort
+  let col = col(&#39;.&#39;) - 1
+  return !col || getline(&#39;.&#39;)[col - 1]  =~# &#39;\s&#39;
+endfunction
+
+&#34; Use &lt;c-space&gt; to trigger completion.
+inoremap &lt;silent&gt;&lt;expr&gt; &lt;c-space&gt; coc#refresh()
+
+&#34; Use `[c` and `]c` to navigate diagnostics
+nmap &lt;silent&gt; [c &lt;Plug&gt;(coc-diagnostic-prev)
+nmap &lt;silent&gt; ]c &lt;Plug&gt;(coc-diagnostic-next)
+
+&#34; Remap keys for gotos
+nmap &lt;silent&gt; gd &lt;Plug&gt;(coc-definition)
+nmap &lt;silent&gt; gy &lt;Plug&gt;(coc-type-definition)
+nmap &lt;silent&gt; gi &lt;Plug&gt;(coc-implementation)
+nmap &lt;silent&gt; gr &lt;Plug&gt;(coc-references)
+
+&#34; Use U to show documentation in preview window
+nnoremap &lt;silent&gt; U :call &lt;SID&gt;show_documentation()&lt;CR&gt;
+
+&#34; Remap for rename current word
+nmap &lt;leader&gt;rn &lt;Plug&gt;(coc-rename)
+
+&#34; Remap for format selected region
+vmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format-selected)
+nmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format-selected)
+&#34; Show all diagnostics
+nnoremap &lt;silent&gt; &lt;space&gt;a  :&lt;C-u&gt;CocList diagnostics&lt;cr&gt;
+&#34; Manage extensions
+nnoremap &lt;silent&gt; &lt;space&gt;e  :&lt;C-u&gt;CocList extensions&lt;cr&gt;
+&#34; Show commands
+nnoremap &lt;silent&gt; &lt;space&gt;c  :&lt;C-u&gt;CocList commands&lt;cr&gt;
+&#34; Find symbol of current document
+nnoremap &lt;silent&gt; &lt;space&gt;o  :&lt;C-u&gt;CocList outline&lt;cr&gt;
+&#34; Search workspace symbols
+nnoremap &lt;silent&gt; &lt;space&gt;s  :&lt;C-u&gt;CocList -I symbols&lt;cr&gt;
+&#34; Do default action for next item.
+nnoremap &lt;silent&gt; &lt;space&gt;j  :&lt;C-u&gt;CocNext&lt;CR&gt;
+&#34; Do default action for previous item.
+nnoremap &lt;silent&gt; &lt;space&gt;k  :&lt;C-u&gt;CocPrev&lt;CR&gt;
+&#34; Resume latest coc list
+nnoremap &lt;silent&gt; &lt;space&gt;p  :&lt;C-u&gt;CocListResume&lt;CR&gt;
+</code></pre><p><em>The above is a smaller and slightly modified configuration based on
+<a href="https://web.archive.org/web/20240228152359/https://github.com/neoclide/coc.nvim/tree/3bdfdd2a86046d7b0938da6e0f940ec39f999bca#example-vim-configuration">coc.nvim's
+recommendations</a>.</em></p>
+</li>
+<li>
+<p>Copy the following to tell <code>vim-go</code> to not map <code>gd</code> as its shortcut for go to definition.</p>
+<pre tabindex="0"><code>&#34; disable vim-go :GoDef short cut (gd)
+&#34; this is handled by LanguageClient [LC]
+let g:go_def_mapping_enabled = 0
+</code></pre><p><em>This is disabled to allow <code>coc.vim</code> to do the <code>gd</code> resolution.</em></p>
+</li>
+<li>
+<p>Save <code>init.vim</code> and exit Vim.</p>
+</li>
+<li>
+<p>Install the <code>coc.nvim</code> plugin.</p>
+<pre tabindex="0"><code>vim +PlugInstall
+</code></pre><p>output:</p>
+<pre tabindex="0"><code>Updated. Elapsed time: 0.027422 sec.
+[==]
+
+- Finishing ... Done!
+- vim-go: Already installed
+- coc.nvim: Installed
+</code></pre></li>
+<li>
+<p>Open Vim.</p>
+</li>
+<li>
+<p>Verify <code>coc.nvim</code> is working by running CocInfo.</p>
+<pre tabindex="0"><code>:CocInfo
+</code></pre><p>output:</p>
+<pre tabindex="0"><code>## versions
+
+vim version: NVIM v0.3.4
+node version: v11.14.0
+coc.nvim version: 0.0.65
+term: rxvt
+platform: linux
+
+## Error messages
+
+## Output channel: highlight
+</code></pre></li>
+<li>
+<p>Edit the CocConfig.</p>
+<pre tabindex="0"><code>:CocConfig
+</code></pre><p><em>You may be prompted to install the JSON plugin. If you say yes, it will
+validate JSON based on structure and schema. Pretty cool!</em></p>
+</li>
+<li>
+<p>Setup the following <a href="https://web.archive.org/web/20240228152359/https://github.com/neoclide/coc.nvim/wiki/Language-servers">languageserver</a> in your configuration.</p>
+<pre tabindex="0"><code>{
+  &#34;languageserver&#34;: {
+    &#34;golang&#34;: {
+      &#34;command&#34;: &#34;gopls&#34;,
+      &#34;rootPatterns&#34;: [&#34;go.mod&#34;, &#34;.vim/&#34;, &#34;.git/&#34;, &#34;.hg/&#34;],
+      &#34;filetypes&#34;: [&#34;go&#34;]
+    }
+  }
+}
+</code></pre><p><em>This assumes <code>gopls</code> is in your <code>$PATH</code>, if its not, point to it in your <code>$GOBIN</code>.</em></p>
+</li>
+<li>
+<p>Restart Vim.</p>
+</li>
+<li>
+<p>Open the project from before.</p>
+</li>
+<li>
+<p>Verify <code>coc.nvim</code> is working by trying the following commands.</p>
+<ul>
+<li>
+<p>Test dot (<code>.</code>) completion in a function</p>
+<ul>
+<li>autocomplete should pop up with suggestions from <code>[LS]</code> (Language Server).</li>
+</ul>
+</li>
+<li>
+<p>Use <code>gd</code> to go to a definition.</p>
+<ul>
+<li>you can use <code>ctrl + o</code> to go back.</li>
+</ul>
+</li>
+<li>
+<p>Run <code>:CocList diagnostics</code> to see and search through all problems with the project.</p>
+<ul>
+<li><code>space + a</code> is a shortcut for this.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<a href="https://web.archive.org/web/20240228152359/https://octetz.s3.us-east-2.amazonaws.com/coc-vim.gif" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228152359im_/https://octetz.s3.us-east-2.amazonaws.com/coc-vim.gif">
+</a>
+<h2 id="play-around">Play Around!</h2>
+<p>Now your environment is setup and it is time to become familiar with <code>vim-go</code>
+and <code>coc.nvim</code>. Be sure to check the video at the top of this write-up for
+examples of my shortcuts. <code>vim-go</code> and <code>coc.nvim</code> have great documentation. It
+can be accessed in Vim with the following commands.</p>
+<p>vim-go</p>
+<pre tabindex="0"><code>:help vim-go
+</code></pre><p>coc.nvim</p>
+<pre tabindex="0"><code>:help coc-nvim
+</code></pre></div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#the-past-and-the-present">The Past and The Present</a></li>
+<li><a href="index.html#prerequisites">Prerequisites</a></li>
+<li><a href="index.html#installing-vim-go">Installing vim-go</a></li>
+<li><a href="index.html#installing-cocnvim">Installing coc.nvim</a></li>
+<li><a href="index.html#play-around">Play Around!</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 15:23:59 Feb 28, 2024 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:19:50 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 2.674
+  exclusion.robots: 0.018
+  exclusion.robots.policy: 0.009
+  esindex: 0.009
+  cdx.remote: 7.107
+  LoadShardBlock: 78.497 (3)
+  PetaboxLoader3.datanode: 62.444 (4)
+  PetaboxLoader3.resolve: 69.564 (2)
+  load_resource: 90.585
+-->

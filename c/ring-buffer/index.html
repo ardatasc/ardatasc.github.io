@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="ring-buffer">Ring Buffer</h1>
+<p>A ring buffer, or circular queue, is my favorite data structure. I’ve used it
+countless times throughout my career to solve a myriad of things. Today i’m
+going to take you through an example problem, the design of a ring buffer, and
+an implementation (in Go).</p>
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+<iframe src="https://web.archive.org/web/20240228160807if_/https://www.youtube.com/embed/KyreJSKEagg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div>
+<h2 id="problem">Problem</h2>
+<p>You’re tasked with getting data from thousands of low-powered sensors to a
+database. You realize that maintaining connections for each sensor to the
+database is not a good architectural decision. Additionally, hitting the
+database with an insert for every sensor read will strain the backend. Thus, you
+want to create a co-located emitter that can receive sensor data and emit it in
+batches every 30 seconds to the database.</p>
+<p>Situations like this often require consideration around:</p>
+<ol>
+<li>What should our max batch size be?</li>
+<li>What should we do if sensor data enters when the batch size is reached?
+<ol>
+<li>Can be caused by a database connection issue, outage, or sensors emitting to much data.</li>
+</ol>
+</li>
+</ol>
+<p>While this condition is unideal, there’s a commonly taken trade-off here. Rather
+than trying to deal with
+<a href="https://web.archive.org/web/20240228160807/https://en.wikipedia.org/wiki/Backpressure_routing#:~:text=Backpressure%20routing%20is%20an%20algorithm,with%20wireless%20and%20wireline%20components.">backpressure</a>,
+it may be best to just <strong>drop the oldest data stored in the emitter</strong> and
+<strong>ensure</strong> <strong>whatever is queued up for the next emit</strong> <strong>is the newest</strong>. This
+way, while there’s data loss, we can ensure we have the most up-to-date signal
+from the sensors.</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" viewbox="-0.5 -0.5 1132 441" content="<mxfile host=&quot;app.diagrams.net&quot; modified=&quot;2023-03-24T13:36:33.419Z&quot; agent=&quot;5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36&quot; version=&quot;21.0.8&quot; etag=&quot;mld4RW213fQDwXWysFtU&quot; type=&quot;device&quot;><diagram name=&quot;Page-1&quot; id=&quot;N_1NsE6MjYvNgISBwqey&quot;>5VlLc9sgGPw1PjaDQEj2MXHS9pBOM+ND2yOR0KPBRkUotvvriwRYxpLHjiM7zcQXoQUE7LIfD4/QdL76IkiRfeMxZSMI4tUI3Y4g9DAG6lEja41MQqSBVOSxKdQCs/wvNaCpl1Z5TEunoOScybxwwYgvFjSSDkaE4Eu3WMKZ22pBUtoBZhFhXfRHHstMo2M7rBr/SvM0sy17wOTMiS1sgDIjMV9uQehuhKaCc6lT89WUspo8y4uu93lP7qZjgi7kMRWgrvBMWGXGZvol13awgleLmNblwQjdLLNc0llBojp3qeRVWCbnTL15Kmk+R4Wkq71d8jYDVTOE8jmVYq2K2AqB4cZMDmhpXbZUexODZVs0+3Z6ECNvuvl2y4BKGBL6CUEdQmZ0UXJRvo6XJGdsyhkXTV0UEACSpMb5Qm7hSfNTeCkFf6JbOSgEYDo1NYwjvPGZGIdHMo4GINw/QCwXMuMpXxB2z3lh6PxNpVwbFkgluUu2GrZY/6zrXwHgW+BXA/getsDtyjSh39bmTVNvfY1s/gMVuRocFaaY7jaNdyJFySsRGQib0ERESq0Q/tHiCMqIzJ/dz7+Gadzj9YBJM6ccDYI/FbcZn8qG52tVAHnFqhm6zVeptH7O7JfK6tFiwGKqX1vwFqqbtfCA9orHAIToJfa6xmqmgGHspBY4105h107jHjeFA7gpOKebXCe93EdHWCb8vywTXsAyHSO8rAGIr8YIoT2teB/Pbii4nN3Gw9ttz/KzZznD4QEXnrp2TS5jRFP1gefNbDeSBtDdkODdjYbulqm1I9emG0cpOHnvDocfz+H+BR1uzxSXs3i7QdUWDzA8k8c9e3Z+G5N7rskDcDaT24G+X5ejj+dyfEmXd+9BbokkpeSCdiguM1LUyWjNcsW1QIeJftSq3D9uABI9pY1W3yupPkNtaDAnezyEOqD5uXcGMOwEIDjQLQLArqFRiDsCQr9HQQ8OISHqCFUHv5l5bcP0XYvevNnhqDdkn3RisgHbCeJw+CB+tA5+T6zdFYaxvCjpYd+QstD3t0m+qmUaYp7i8c40Bd04swkq29N0mEjz+lsY6O9ZJG6qJFGT6ciV4nQR/qtlY3cbgVCPnF6fnCdcF6vX9m5eb0TafzjQ3T8=</diagram></mxfile>" style="background-color: rgb(255, 255, 255);"><defs></defs><g><rect x="0" y="30" width="190" height="410" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><rect x="0" y="0" width="190" height="30" fill="#6a00ff" stroke="#3700cc" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 15px; margin-left: 1px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 18px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">Sensors</div></div></div></foreignobject><text x="95" y="20" fill="#ffffff" font-family="jbm" font-size="18px" text-anchor="middle">Sensors</text></switch></g><path d="M 135 98.13 L 411.48 188.9" fill="none" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 417.89 191 L 407.94 192.47 L 411.48 188.9 L 410.75 183.92 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="all"></path><rect x="55" y="50" width="80" height="70" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 85px; margin-left: 56px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 31px;">S<sub>0</sub></font></div></div></div></foreignobject><text x="95" y="89" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">S0</text></switch></g><path d="M 135 179.92 L 409.97 213.77" fill="none" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 416.67 214.59 L 407.19 217.96 L 409.97 213.77 L 408.29 209.02 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="all"></path><rect x="55" y="140" width="80" height="70" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 175px; margin-left: 56px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 31px;">S</font><font style="font-size: 25.8333px;">1</font></div></div></div></foreignobject><text x="95" y="179" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">S1</text></switch></g><path d="M 135 269.96 L 411.06 235.16" fill="none" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 417.75 234.32 L 409.39 239.91 L 411.06 235.16 L 408.26 230.98 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="all"></path><rect x="55" y="240" width="80" height="70" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 275px; margin-left: 56px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 31px;">S</font><font style="font-size: 25.8333px;">2</font></div></div></div></foreignobject><text x="95" y="279" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">S2</text></switch></g><path d="M 135 360.54 L 414.55 259.48" fill="none" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 420.9 257.18 L 413.96 264.47 L 414.55 259.48 L 410.9 256.01 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="all"></path><rect x="55" y="340" width="80" height="70" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 78px; height: 1px; padding-top: 375px; margin-left: 56px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 31px;">S</font><font style="font-size: 25.8333px;">3</font></div></div></div></foreignobject><text x="95" y="379" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">S3</text></switch></g><path d="M 890 170 C 890 161.72 943.73 155 1010 155 C 1041.83 155 1072.35 156.58 1094.85 159.39 C 1117.36 162.21 1130 166.02 1130 170 L 1130 260 C 1130 268.28 1076.27 275 1010 275 C 943.73 275 890 268.28 890 260 Z" fill="#d80073" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="all"></path><path d="M 1130 170 C 1130 178.28 1076.27 185 1010 185 C 943.73 185 890 178.28 890 170" fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" pointer-events="all"></path><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 238px; height: 1px; padding-top: 228px; margin-left: 891px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 27px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">Datastore</div></div></div></foreignobject><text x="1010" y="236" fill="#ffffff" font-family="jbm" font-size="27px" text-anchor="middle">Datastore</text></switch></g><path d="M 690 215 L 879.9 215" fill="none" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 886.65 215 L 877.65 219.5 L 879.9 215 L 877.65 210.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-width="3" stroke-miterlimit="10" pointer-events="all"></path><ellipse cx="555" cy="215" rx="135" ry="135" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></ellipse><ellipse cx="555" cy="215" rx="105" ry="105" fill="#d80073" stroke="#a50040" pointer-events="all"></ellipse><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 208px; height: 1px; padding-top: 215px; margin-left: 451px;"><div data-drawio-colors="color: #ffffff; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;"><font style="font-size: 24px;">Buffer</font></div></div></div></foreignobject><text x="555" y="219" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">Buffer</text></switch></g></g><switch><g requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"></g><a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Text is not SVG - cannot display</text></a></switch></svg></p>
+<p>To solve the above, we’ll design and implement ring buffer.</p>
+<h2 id="buffer-design">Buffer Design</h2>
+<p>In its simplest form, this buffer is essentially an array where the index
+<code>(length(array)-1) + 1</code> = <code>array[0]</code>. Or:</p>
+<p>$$
+array = a_1, a_2, \ldots a_{n}
+\newline
+a_{n+1}=a_{1}
+$$</p>
+<p>Notation aside, this creates a circle (<em><strong><strong><strong><strong><strong><strong>conceptually)</strong></strong></strong></strong></strong></strong></em>
+out of the array. Wikipedia has an excellent graphic:</p>
+<p><img src="https://web.archive.org/web/20240228160807im_/https://upload.wikimedia.org/wikipedia/commons/f/fd/Circular_Buffer_Animation.gif" alt="wikipedia: ring-buffer"></p>
+<p>While this representation is true to our future implementation, there are a few
+key things to point out:</p>
+<ul>
+<li>Our read (emit) will (eventually) be triggered by time.</li>
+<li>We’ll allow overwriting should the write pointer reach, or pass, the read
+pointer.</li>
+</ul>
+<p>With the conceptual idea of this data structure in place, lets build it.</p>
+<h2 id="implementation">Implementation</h2>
+<p>Throughout this section I’ll show snippets of code for brevity. To see the
+entire implementation visit
+<a href="https://web.archive.org/web/20240228160807/https://github.com/joshrosso/ringbuffer">https://github.com/joshrosso/ringbuffer</a>.</p>
+<p>First, we’ll start off with the data structure:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// RingBuffer is a circular buffer for storing [Data].
+</span></span></span><span class="line"><span class="cl"><span class="c1">// It allows for writing and emitting data. When the
+</span></span></span><span class="line"><span class="cl"><span class="c1">// buffer is full, the oldest data is overwritten.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">RingBuffer</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">data</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Data</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// total size of buffer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">size</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// last element that was writtent to in buffer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">lastInsert</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// next element to read during emit
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">nextRead</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// time between emit cycles
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">emitTime</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Data represents input received from sensors.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">Data</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Stamp</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Value</span> <span class="kt">string</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Next a constructor for <code>RingBuffer</code>.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">NewRingBuffer</span><span class="p">(</span><span class="nx">size</span> <span class="kt">int</span><span class="p">)</span> <span class="o">*</span><span class="nx">RingBuffer</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">RingBuffer</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">data</span><span class="p">:</span> <span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">Data</span><span class="p">,</span> <span class="nx">size</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">size</span><span class="p">:</span> <span class="nx">size</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// initialize to -1 so that we can discern when
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// no insert has occured.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">lastInsert</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Note that <code>data</code> gets initialized to the exact <code>size</code> for the buffer. This
+ensures <a href="https://web.archive.org/web/20240228160807/https://go.dev/blog/slices-intro">there is no overhead in Go needing to reallocate arrays as the slice
+grows</a>.</p>
+<p>Next let’s create an API for inserting to the ring buffer.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Insert adds a new [Data] to the [RingBuffer].
+</span></span></span><span class="line"><span class="cl"><span class="c1">// If the buffer is full, the oldest data is overwritten.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">RingBuffer</span><span class="p">)</span> <span class="nf">Insert</span><span class="p">(</span><span class="nx">input</span> <span class="nx">Data</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span> <span class="p">=</span> <span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nx">r</span><span class="p">.</span><span class="nx">size</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">r</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span><span class="p">]</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">input</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="o">==</span> <span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="p">=</span> <span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nx">r</span><span class="p">.</span><span class="nx">size</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>There’s a bit of cleverness here with expressions like <code>(r.lastInsert + 1) % r.size</code>. This expression enabled us to move forward in the buffer, ensuring that
+if we’re at the end of the array, we start at the beginning. To make the example
+concrete, consider an array of size <code>5</code> where we want to move to the &quot;next&quot;
+element from index <code>4</code>:</p>
+<p>$$
+nextIndex = ((4 + 1)\mod 5) = 0
+$$</p>
+<p>With insert in place, we can now implement the emit functionality.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Emit returns all data in [RingBuffer] since the last call
+</span></span></span><span class="line"><span class="cl"><span class="c1">// to Emit.  If no data has been written since the last call
+</span></span></span><span class="line"><span class="cl"><span class="c1">// to Emit, an empty slice is returned.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">RingBuffer</span><span class="p">)</span> <span class="nf">Emit</span><span class="p">()</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Data</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">output</span> <span class="o">:=</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Data</span><span class="p">{}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">output</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">output</span><span class="p">,</span> <span class="nx">r</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">r</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span><span class="p">]</span> <span class="p">=</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="o">==</span> <span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span> <span class="o">||</span> <span class="nx">r</span><span class="p">.</span><span class="nx">lastInsert</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">break</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="p">=</span> <span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">nextRead</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nx">r</span><span class="p">.</span><span class="nx">size</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">output</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>As a final step, you can setup main such that it validates the buffer behavior.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rb</span> <span class="o">:=</span> <span class="nf">NewRingBuffer</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">currentRune</span> <span class="o">:=</span> <span class="sc">&#39;a&#39;</span> <span class="o">-</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;EMPTY TEST:&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">spew</span><span class="p">.</span><span class="nf">Dump</span><span class="p">(</span><span class="nx">rb</span><span class="p">.</span><span class="nf">Emit</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;FULL TEST:&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="mi">10</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">currentRune</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">rb</span><span class="p">.</span><span class="nf">Insert</span><span class="p">(</span><span class="nx">Data</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">Stamp</span><span class="p">:</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">(),</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">Value</span><span class="p">:</span> <span class="nb">string</span><span class="p">(</span><span class="nx">currentRune</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">		<span class="p">})</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">spew</span><span class="p">.</span><span class="nf">Dump</span><span class="p">(</span><span class="nx">rb</span><span class="p">.</span><span class="nf">Emit</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>In the 2 tests above, the <code>EMPTY TEST</code> will return an empty slice and <code>FULL TEST</code> will return f, g, h, i k.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">EMPTY</span> <span class="nx">TEST</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl"><span class="p">([]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nx">FULL</span> <span class="nx">TEST</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl"><span class="p">([]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span> <span class="nx">cap</span><span class="p">=</span><span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)(</span><span class="mh">0xc000108540</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">24</span> <span class="mo">07</span><span class="p">:</span><span class="mo">07</span><span class="p">:</span><span class="mf">11.779010999</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000126421</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Value</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">1</span><span class="p">)</span> <span class="s">&#34;f&#34;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">}),</span>
+</span></span><span class="line"><span class="cl"> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)(</span><span class="mh">0xc000108570</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">24</span> <span class="mo">07</span><span class="p">:</span><span class="mo">07</span><span class="p">:</span><span class="mf">11.77901113</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000126550</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Value</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">1</span><span class="p">)</span> <span class="s">&#34;g&#34;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">}),</span>
+</span></span><span class="line"><span class="cl"> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)(</span><span class="mh">0xc0001085a0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">24</span> <span class="mo">07</span><span class="p">:</span><span class="mo">07</span><span class="p">:</span><span class="mf">11.779011261</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000126684</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Value</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">1</span><span class="p">)</span> <span class="s">&#34;h&#34;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">}),</span>
+</span></span><span class="line"><span class="cl"> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)(</span><span class="mh">0xc0001085d0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">24</span> <span class="mo">07</span><span class="p">:</span><span class="mo">07</span><span class="p">:</span><span class="mf">11.779011404</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000126826</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Value</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">1</span><span class="p">)</span> <span class="s">&#34;i&#34;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">}),</span>
+</span></span><span class="line"><span class="cl"> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">Data</span><span class="p">)(</span><span class="mh">0xc000108600</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">24</span> <span class="mo">07</span><span class="p">:</span><span class="mo">07</span><span class="p">:</span><span class="mf">11.779011556</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000126978</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">  <span class="nx">Value</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">1</span><span class="p">)</span> <span class="s">&#34;j&#34;</span>
+</span></span><span class="line"><span class="cl"> <span class="p">})</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>In the case of <code>FULL TEST</code>, <code>a</code> through <code>j</code> are inserted into the ring buffer,
+but since the size is set to <code>5</code>, <code>a</code> through <code>e</code> are overwritten and when emit
+is called, <code>f</code> through <code>j</code> is all that remains.</p>
+<p>Now that we’ve got functionality validated around the buffer, the final step
+you’d setup is to create a Run() function that can be called in a separate Go
+routine. You can use the <code>emitTime</code> property setup in the <code>RingBuffer</code> struct to
+configure a loop using <code>time.Sleep</code>. Note that if you go this extra step, it
+becomes extra important you consider a mutex that can lock the buffer during an
+emit cycle!</p>
+<p>Wrapping up this exercise, there are a few items of note.</p>
+<ul>
+<li>You should consider needs around thread safety. It’s not handled here in order
+to keep the code samples succinct, but mutex’s when doing emit and potentially
+even insert should be considered.</li>
+<li>If you find expression like <code>(r.nextRead + 1) % r.size</code> ugly, one way to clean
+it up would be to introduce a new type for <code>lastInsert</code> and <code>nextRead</code> that
+holds an int and has a method for <code>Next()</code>, this would abstract the idea of
+wrapping around the data structure.</li>
+<li>In <code>Emit</code>, we set the <code>Data</code> read to nil. This could trigger some garbage
+collection prematurely, however I think this keeps the state of the data
+structure clean and is an optimization that won’t see significant benefit in
+most cases.</li>
+<li>Go has a <a href="https://web.archive.org/web/20240228160807/https://pkg.go.dev/container/ring">ring package</a>, but I’m not too
+crazy about its API and its implemented as a linked list, which is likely to
+have lesser performance since its non-contiguous memory.</li>
+</ul>
+<h2 id="closing">Closing</h2>
+<p>One of the beauties of data structures is that we can solve so many problems
+adding a little sugar on top of an array or map (hash table). This small
+implementation can solve some real-world problems and is a great tool to have in
+the belt. I also love some of the tricks like using modulo to ensure we end up
+back at index <code>1</code> if we’re trying to get the next element at the end of the
+array. Simply put, I find it really weirdly inspiring knowing simple solutions
+with known primitives are often just sitting amongst us waiting to be used 🙂.
+Hope you found this interesting and happy building!</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#problem">Problem</a></li>
+<li><a href="index.html#buffer-design">Buffer Design</a></li>
+<li><a href="index.html#implementation">Implementation</a></li>
+<li><a href="index.html#closing">Closing</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 16:08:07 Feb 28, 2024 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:16:10 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.766
+  exclusion.robots: 0.037
+  exclusion.robots.policy: 0.023
+  esindex: 0.013
+  cdx.remote: 21.335
+  LoadShardBlock: 189.617 (3)
+  PetaboxLoader3.datanode: 128.302 (4)
+  PetaboxLoader3.resolve: 174.895 (3)
+  load_resource: 126.502
+-->

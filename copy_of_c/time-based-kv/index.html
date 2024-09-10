@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="time-based-kv-store-in-go-interview-question">Time-based KV Store in Go (Interview Question)</h1>
+<p>I recently got the <a href="https://web.archive.org/web/20231208163239/https://leetcode.com/problems/time-based-key-value-store/">Time Based Key-Value
+Store</a> problem in a
+technical interview. It’s a fun exercise, and I believe there might a
+interesting spin one could put on it. What follows is <strong>not</strong> a recommendation
+for an interview question, more-so just an interesting modification to the
+problem for us to ponder and solve.</p>
+<p><em>Content in video form if that's more of your thing:</em></p>
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+<iframe src="https://web.archive.org/web/20231208163239if_/https://www.youtube.com/embed/qG4X7d8LgzQ" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div>
+<p><strong>The original question breaks down to the following:</strong></p>
+<ul>
+<li>Create a new data-structure named <code>TimeMap</code>.</li>
+<li>Implement <code>set(String key, String value, int timestamp)</code></li>
+<li>Implement <code>String get(String key, int timestamp)</code>
+<ul>
+<li>Based on <code>timestamp</code>, all values that are less than or equal to this value
+should be returned.</li>
+</ul>
+</li>
+</ul>
+<p><strong>The following is assumed:</strong></p>
+<ul>
+<li>You may use the standard library.</li>
+<li>Keys are always <code>set</code> chronologically.</li>
+</ul>
+<p>The standard solution to the problem is to use a <code>map</code> of keys that hold a list
+of values. Since the values can be assumed to be retrieved chronologically, you
+can use binary search to find the first key larger than the time stamp asked for
+in the <code>get</code> call. Then you return all elements lower than it. This solution has
+a time complexity of:</p>
+<p>$$
+set = O(1) \newline
+get = O(log\ n)
+$$</p>
+<h2 id="enhancements">Enhancements</h2>
+<p>Some of these enhancements are inspired by the specific questions asked of me,
+while others are ideas I came up with (I'm trying not to give too much away
+about the specific interview).</p>
+<p>In this new question, we’re going to keep most properties the same. Here are the
+changes:</p>
+<ul>
+<li><code>set</code> no longer takes a timestamp; it’s calculated at time of call.
+<ul>
+<li>Time precision should be to the nanosecond.</li>
+</ul>
+</li>
+<li><code>get</code> accepts the timestamp <strong>optionally.</strong></li>
+<li>When <code>get</code> receives <strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>no
+timestamp</strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong> return the latest value for the key.</li>
+<li>When <code>get</code> receives a timestamp, return a single element at that timestamp.</li>
+<li>Implement <code>String getBefore(String key, int timestamp)</code>, which effectively
+does what the original <code>get</code> asked for.</li>
+</ul>
+<p>Extra considerations:</p>
+<ul>
+<li>Attempt to keep time complexity of <code>get</code> as low as possible.
+<ul>
+<li>Ideally <code>O(1)</code>.</li>
+<li>Try to be efficient with memory, but lookup time is more important.</li>
+</ul>
+</li>
+<li>String is used as the value for simplicity, but pretend the value can be a
+sizable object.</li>
+</ul>
+<p>With these changes in mind, we need to enhance the data structure to optimize
+around <code>get</code>. Specifically, we need to set something up that can get us a
+constant lookup time regardless of whether the user asks for a specific time or
+not (ie gets the latest).</p>
+<h2 id="solution-design">Solution: Design</h2>
+<p>First, let’s consider the data structure we want to build. In order to
+facilitate <code>O(1)</code> on <code>get</code>, we can create something like:</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" viewbox="-0.5 -0.5 781 341" content="<mxfile host=&quot;app.diagrams.net&quot; modified=&quot;2023-03-18T12:55:53.278Z&quot; agent=&quot;5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36&quot; version=&quot;20.8.12&quot; etag=&quot;Ec2dr6jSkkWjOaReI-xI&quot; type=&quot;device&quot;><diagram name=&quot;Page-1&quot; id=&quot;lL2flwJLBxz_J78wSu8R&quot;>3Vpbc6IwGP01vu7kAoiPq3Zvs53ZGXdmt4+pRGCLxA2x6v76DZIIMUhti6L2peTkCyTnOye3todH8/VnThbRPQto0kMgWPfwuIcQhANH/sqRjUI84BVIyONAYSUwif9RBQKFLuOAZkagYCwR8cIEpyxN6VQYGOGcrcywGUvMry5ISC1gMiWJjf6KAxEVqO+CEv9C4zDSX4ZA1cyJDlZAFpGArSoQvuvhEWdMFE/z9YgmOXual6LdpwO1u45xmopjGqCiwTNJlmpsql9iowdLAzl2VWRcRCxkKUnuSnTI2TINaP5GIEtlzHfGFhKEEvxDhdioRJKlYBKKxDxRtcU38w8Zw8jYkk8VhFWaCQ+pGplrDxbuKJTio2xOBd/IEE4TIuJn8+1EiSDcxZU8yQdFVT1t2KLtZzyn92RhsWdys4piQScLsh3VSrrD5GEWJ8mIJYxv2+IZIBgQiWeCsydaqRmO+wDkL5yxVFRwsP3ZMfpMuaDrg9I4wJZqoNWsTYpVeVUqHmoZRxW1e+D9/DoXqkLXVqHfvgq3TT9yTjaVgAWLU5FV3vwjB8p0Ydc18oXwnvP34iEETfHyoehBma/dUI5KoWtZ5InKph97yEskT8NHLp9CseXd+7vMJ7xhwMKyYEngBfOY+W/BALtJWjvAsR2A+jUOcFpwgHctE7NvWwKCo6lufWbuXzNvTne8+RZvQq5oE8E4vd01DflnXNMGXQhR8sI3v1X7beEhL3xwdXG8rlaON8b02Shg7fKqgl+RkdYVrPtTkfD2MXvtQtKeYltfkvb068Az6hdCi8izCrjU7IMh2XoB03UsKs1k6aFSUzbKC68RvVMzbXsdir6T5e0aknKCffnRScHXlJQ3Eow63OTp/uztVr5KAtc3NNvvH0DOul2B7q2J2KsRMepQxPYR79AJ+RtJZSBKgx4a5Q8A2TPMuU/HuL8nzkGNOJ0TnY5h/9bEWXMcPMVm+k1XSx4wU4395qsl7LtN8e++WoL2YbXZOTATF+QcF3fpnI6Poa07B9UdQ/GFOKfv7Tln0Owc13Ob4t/tHGSfkZudg/klrTneoEPn6O4aV4v6snrF2OyCrq6x8/JFweBEG0e9p6rl6ZHwpwviycEd8mT/EbFkJmKr5IJ4ctHZeJLF8s/fxRRX/hcBvvsP</diagram></mxfile>" style="background-color: rgb(255, 255, 255);"><defs></defs><g><path d="M 120 30 L 163.63 30" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 168.88 30 L 161.88 33.5 L 163.63 30 L 161.88 26.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="0" y="0" width="120" height="60" fill="#f0a30a" stroke="#bd7000" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 30px; margin-left: 1px;"><div data-drawio-colors="color: #000000; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">TimeMap</div></div></div></foreignobject><text x="60" y="34" fill="#000000" font-family="jbm" font-size="12px" text-anchor="middle">TimeMap</text></switch></g><path d="M 305 50 L 305 100 L 60 100 L 60 143.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 60 148.88 L 56.5 141.88 L 60 143.63 L 63.5 141.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="170" y="10" width="270" height="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 268px; height: 1px; padding-top: 30px; margin-left: 171px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">key:<br>&quot;dog&quot;</div></div></div></foreignobject><text x="305" y="34" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">key:...</text></switch></g><path d="M 60 210 L 60 273.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 60 278.88 L 56.5 271.88 L 60 273.63 L 63.5 271.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><path d="M 120 180 L 163.63 180" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 168.88 180 L 161.88 183.5 L 163.63 180 L 161.88 176.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="0" y="150" width="120" height="60" fill="#f0a30a" stroke="#bd7000" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 180px; margin-left: 1px;"><div data-drawio-colors="color: #000000; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">timeStore</div></div></div></foreignobject><text x="60" y="184" fill="#000000" font-family="jbm" font-size="12px" text-anchor="middle">timeStore</text></switch></g><path d="M 120 310 L 283.63 310" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 288.88 310 L 281.88 313.5 L 283.63 310 L 281.88 306.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="0" y="280" width="120" height="60" fill="#f0a30a" stroke="#bd7000" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 310px; margin-left: 1px;"><div data-drawio-colors="color: #000000; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">values</div></div></div></foreignobject><text x="60" y="314" fill="#000000" font-family="jbm" font-size="12px" text-anchor="middle">values</text></switch></g><path d="M 230 150 L 230 130 L 390 130 L 390 153.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 390 158.88 L 386.5 151.88 L 390 153.63 L 393.5 151.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><path d="M 230 150 L 230 130 L 550 130 L 550 153.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 550 158.88 L 546.5 151.88 L 550 153.63 L 553.5 151.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><path d="M 290 180 L 465 180 L 465 130 L 710 130 L 710 153.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 710 158.88 L 706.5 151.88 L 710 153.63 L 713.5 151.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="170" y="150" width="120" height="60" fill="#f0a30a" stroke="#bd7000" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 180px; margin-left: 171px;"><div data-drawio-colors="color: #000000; " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">timeIndex</div></div></div></foreignobject><text x="230" y="184" fill="#000000" font-family="jbm" font-size="12px" text-anchor="middle">timeIndex</text></switch></g><path d="M 390 200 L 390 240 L 425 240 L 425 273.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 425 278.88 L 421.5 271.88 L 425 273.63 L 428.5 271.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="320" y="160" width="140" height="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 138px; height: 1px; padding-top: 180px; margin-left: 321px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">key:<br>Jan 2nd, 2023</div></div></div></foreignobject><text x="390" y="184" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">key:...</text></switch></g><path d="M 550 200 L 550 250 L 335 250 L 335 273.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 335 278.88 L 331.5 271.88 L 335 273.63 L 338.5 271.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="480" y="160" width="140" height="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 138px; height: 1px; padding-top: 180px; margin-left: 481px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">key:<br>Jan 1st, 2023</div></div></div></foreignobject><text x="550" y="184" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">key:...</text></switch></g><path d="M 710 200 L 710 260 L 515 260 L 515 273.63" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 515 278.88 L 511.5 271.88 L 515 273.63 L 518.5 271.88 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="640" y="160" width="140" height="40" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 138px; height: 1px; padding-top: 180px; margin-left: 641px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">key:<br>Jan 3rd, 2023</div></div></div></foreignobject><text x="710" y="184" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">key:...</text></switch></g><rect x="290" y="280" width="90" height="60" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 88px; height: 1px; padding-top: 310px; margin-left: 291px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">&quot;woof&quot;</div></div></div></foreignobject><text x="335" y="314" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">&quot;woof&quot;</text></switch></g><rect x="380" y="280" width="90" height="60" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 88px; height: 1px; padding-top: 310px; margin-left: 381px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">&quot;bark&quot;</div></div></div></foreignobject><text x="425" y="314" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">&quot;bark&quot;</text></switch></g><rect x="470" y="280" width="90" height="60" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 88px; height: 1px; padding-top: 310px; margin-left: 471px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="display: flex; box-sizing: border=box font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">&quot;howl&quot;</div></div></div></foreignobject><text x="515" y="314" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">&quot;howl&quot;</text></switch></g></g><switch><g requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"></g><a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Text is not SVG - cannot display</text></a></switch></svg></p>
+<p><code>TimeMap</code> is the top-level map that contains the keys. Each key points to a
+unique <code>timeStore</code>, which holds the <code>values</code> list along with a <code>timeIndex</code> using
+the time stamp of a value as a key and pointing to the value in <code>values</code>.</p>
+<p>With this data-structure in place, we can return both the latest element and
+specific (time-based) element in constant time. When the last element is
+desired, we simply return the last element in the <code>values</code>. When a specific
+timestamp is provided, we can lookup the timestamp since they’re store in the
+<code>timeIndex</code> map as a key. If a key is present, we can return the value it points
+to.</p>
+<p>There are a few downsides to consider:</p>
+<ol>
+<li>While constant time, we are potentially doing 2 extra traversals via
+pointers. This can mean:
+<ol>
+<li>Memory of this data structure will grow faster as we maintain the map of
+<code>timeIndex</code>.</li>
+<li>This pointer-based model means even less contiguous memory, thus our data
+structure has less chance (especially as it grows) <a href="https://web.archive.org/web/20231208163239/https://stackoverflow.com/questions/40071635/cpu-cache-disadvantages-of-using-linked-lists-in-c">to land in CPU
+cache</a>.</li>
+<li>Insertion and deletion is more complex as we need to ensure we manage
+<code>timeIndex</code> correctly.</li>
+</ol>
+</li>
+</ol>
+<p>Regarding the <code>getBefore</code> implementation, this remains the same as the original
+question. Thus our complexity ends up at:</p>
+<p>$$
+get = O(1) \newline
+set = O(1) \newline
+getRange = O(log\ n)
+$$</p>
+<h2 id="solution-code">Solution Code</h2>
+<p>In this section, I’ll be showing and explaining the code chunk by chunk, <a href="https://web.archive.org/web/20231208163239/https://github.com/joshrosso/time-based-kv">to see
+the full file, visit the GitHub</a>.</p>
+<p>To begin, let’s create the data structure described above.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// TimeMap holds a key and all values added over time for that key.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">TimeMap</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">times</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">timeStore</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// timeStore is the underlying store for each key.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">timeStore</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">timeIndex</span> <span class="kd">map</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">]</span><span class="o">*</span><span class="nx">value</span> <span class="c1">// mapping to each value based on time
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">values</span>    <span class="p">[]</span><span class="o">*</span><span class="nx">value</span>             <span class="c1">// underlying data store
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// value represents the object stored.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">value</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">stamp</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span> <span class="c1">// timestamp of insertion
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">val</span>   <span class="kt">string</span>    <span class="c1">// string used for simplicity, but imagine a larger struct
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p>Next, we’ll create some helper functions.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// New returns a new [TimeMap].
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">New</span><span class="p">()</span> <span class="nx">TimeMap</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">TimeMap</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">times</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">timeStore</span><span class="p">{},</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// newTimeStore is used when a new key is introduced. It intializes and returns
+</span></span></span><span class="line"><span class="cl"><span class="c1">// the pointer to the new key&#39;s store.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">newTimeStore</span><span class="p">()</span> <span class="o">*</span><span class="nx">timeStore</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">timeStore</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">timeIndex</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">]</span><span class="o">*</span><span class="nx">value</span><span class="p">{},</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">values</span><span class="p">:</span>    <span class="p">[]</span><span class="o">*</span><span class="nx">value</span><span class="p">{},</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">tm</span> <span class="o">*</span><span class="nx">TimeMap</span><span class="p">)</span> <span class="nf">getTimeStore</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">timeStore</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">ts</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nx">times</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">ts</span><span class="p">,</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;key [%s] does not exist&#34;</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Note that our need for <code>newTimeStore</code> is to have an easy way to create a new
+store when a new key is created in the <code>TimeMap</code>. Additionally, <code>getTimeStore</code>
+is a helper function to quickly lookup a key’s existence and return an error if
+not. This will be reused in our our <code>get*</code> implementations.</p>
+<p>The first function to implement is <code>Set</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Set adds a value to a given key. When the value is added, its time stamp is
+</span></span></span><span class="line"><span class="cl"><span class="c1">// recorded.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">tm</span> <span class="o">*</span><span class="nx">TimeMap</span><span class="p">)</span> <span class="nf">Set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">data</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// when the key exists, insert the value into the store
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nx">timeStore</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nx">times</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">stamp</span> <span class="o">:=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">v</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">value</span><span class="p">{</span><span class="nx">stamp</span><span class="p">:</span> <span class="nx">stamp</span><span class="p">,</span> <span class="nx">val</span><span class="p">:</span> <span class="nx">data</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">timeStore</span><span class="p">.</span><span class="nx">values</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">timeStore</span><span class="p">.</span><span class="nx">values</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">timeStore</span><span class="p">.</span><span class="nx">timeIndex</span><span class="p">[</span><span class="nx">stamp</span><span class="p">]</span> <span class="p">=</span> <span class="nx">v</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// when the key is new, create a new store for the key and recall this
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// method
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">tm</span><span class="p">.</span><span class="nx">times</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nf">newTimeStore</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">tm</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>Set</code> focuses on 2 outcomes, whether the key exists or not. When the key exists,
+it’s simply a matter of recording the timestamp and inserting the value into the
+existing <code>timeStore</code>. When the key does not exist, we need to create a new
+<code>timeStore</code> associated with that key. Once that <code>timeStore</code> exists, recursively
+calling this function guarantees the value-insertion (condition 1) logic is run.
+There is a case to be made that the recursive call is unnecessarily ‘clever’,
+however I feel it’s fine.</p>
+<p>With set in place, we can do some simple testing in a <code>main()</code> function:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="nx">tm</span> <span class="o">:=</span> <span class="nf">New</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nx">kvs</span> <span class="o">:=</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">][]</span><span class="kt">string</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;dog&#34;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#34;woof&#34;</span><span class="p">,</span> <span class="s">&#34;bark&#34;</span><span class="p">,</span> <span class="s">&#34;sigh&#34;</span><span class="p">,</span> <span class="s">&#34;growl&#34;</span><span class="p">,</span> <span class="s">&#34;wimper&#34;</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;cat&#34;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#34;hiss&#34;</span><span class="p">,</span> <span class="s">&#34;screech&#34;</span><span class="p">,</span> <span class="s">&#34;crash&#34;</span><span class="p">,</span> <span class="s">&#34;meow&#34;</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">sounds</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">kvs</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">sound</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">sounds</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">tm</span><span class="p">.</span><span class="nf">Set</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">sound</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nx">spew</span><span class="p">.</span><span class="nf">Dump</span><span class="p">(</span><span class="nx">tm</span><span class="p">)</span>
+</span></span></code></pre></div><p><code>spew</code> can be retrieved for your project via <code>go get [github.com/davecgh/go-spew/spew](http://github.com/davecgh/go-spew/spew)</code>,
+it’ll enable us to view the end state of the data structure:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="p">(</span><span class="nx">main</span><span class="p">.</span><span class="nx">TimeMap</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"> <span class="nx">times</span><span class="p">:</span> <span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">timeStore</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">3</span><span class="p">)</span> <span class="s">&#34;cat&#34;</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">timeStore</span><span class="p">)(</span><span class="mh">0x1400007c0c0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">   <span class="nx">timeIndex</span><span class="p">:</span> <span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.721497</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000864293</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000643f0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.721497</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000864293</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;hiss&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.742538</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.021904918</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180000</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.742538</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.021904918</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">7</span><span class="p">)</span> <span class="s">&#34;screech&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.763635</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.043003168</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000064420</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.763635</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.043003168</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span><span class="p">)</span> <span class="s">&#34;crash&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.783989</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.063356585</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180030</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.783989</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.063356585</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;meow&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">})</span>
+</span></span><span class="line"><span class="cl">   <span class="p">},</span>
+</span></span><span class="line"><span class="cl">   <span class="nx">values</span><span class="p">:</span> <span class="p">([]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span> <span class="nx">cap</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000643f0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.721497</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.000864293</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;hiss&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180000</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.742538</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.021904918</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">7</span><span class="p">)</span> <span class="s">&#34;screech&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000064420</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.763635</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.043003168</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span><span class="p">)</span> <span class="s">&#34;crash&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180030</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.783989</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.063356585</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;meow&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">})</span>
+</span></span><span class="line"><span class="cl">   <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">  <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">3</span><span class="p">)</span> <span class="s">&#34;dog&#34;</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">timeStore</span><span class="p">)(</span><span class="mh">0x1400007c100</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">   <span class="nx">timeIndex</span><span class="p">:</span> <span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.887096</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.166465210</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000644e0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.887096</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.166465210</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">6</span><span class="p">)</span> <span class="s">&#34;wimper&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.80502</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.084387918</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000064480</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.80502</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.084387918</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;woof&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.826097</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.105464793</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180060</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.826097</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.105464793</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;bark&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.846546</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.125914460</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000644b0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.846546</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.125914460</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;sigh&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.867033</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.146401293</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180090</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.867033</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.146401293</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span><span class="p">)</span> <span class="s">&#34;growl&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">})</span>
+</span></span><span class="line"><span class="cl">   <span class="p">},</span>
+</span></span><span class="line"><span class="cl">   <span class="nx">values</span><span class="p">:</span> <span class="p">([]</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span> <span class="nx">cap</span><span class="p">=</span><span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000064480</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.80502</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.084387918</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;woof&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180060</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.826097</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.105464793</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;bark&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000644b0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.846546</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.125914460</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">4</span><span class="p">)</span> <span class="s">&#34;sigh&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x14000180090</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.867033</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.146401293</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">5</span><span class="p">)</span> <span class="s">&#34;growl&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">(</span><span class="o">*</span><span class="nx">main</span><span class="p">.</span><span class="nx">value</span><span class="p">)(</span><span class="mh">0x140000644e0</span><span class="p">)({</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">stamp</span><span class="p">:</span> <span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="mi">2023</span><span class="o">-</span><span class="mo">03</span><span class="o">-</span><span class="mi">17</span> <span class="mi">18</span><span class="p">:</span><span class="mi">58</span><span class="p">:</span><span class="mf">21.887096</span> <span class="o">-</span><span class="mo">0600</span> <span class="nx">MDT</span> <span class="nx">m</span><span class="p">=</span><span class="o">+</span><span class="mf">0.166465210</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">     <span class="nx">val</span><span class="p">:</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">len</span><span class="p">=</span><span class="mi">6</span><span class="p">)</span> <span class="s">&#34;wimper&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">})</span>
+</span></span><span class="line"><span class="cl">   <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">})</span>
+</span></span><span class="line"><span class="cl"> <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>While that’s a lot of output, it does give us a solid visual of the data
+structure. Some key notes are:</p>
+<ul>
+<li><code>TimeMap</code> has 2 keys: <code>dog</code> and <code>cat</code>.</li>
+<li>Each key has its own <code>timeStore</code>.</li>
+<li>Every <code>timeStore</code> holds the values in <code>values</code> and a <code>timeIndex</code>, which uses
+the insertion time as the key and hold a <strong>pointer</strong> to the value.
+<ul>
+<li>for example, in the key <code>dog</code>, you can see the <code>values</code> slice and
+<code>timeIndex</code> map hold the <strong>same value</strong>, <code>0x14000064480</code>, which is the
+memory address of <code>woof</code>.</li>
+</ul>
+</li>
+</ul>
+<p>If your lost, consider reviewing this output against the diagram in the
+<code>Solution Design</code> above.</p>
+<p><em>Going forward, I won’t print the <code>spew.Dump</code> output, but if you’re following
+along you should continue testing with it.</em></p>
+<p>Next we can implement the <code>Get</code> function:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Get returns a value for key. If stamp is provided, the value with that
+</span></span></span><span class="line"><span class="cl"><span class="c1">// timestamp is returned. If stamp is not provided, the last element inserted
+</span></span></span><span class="line"><span class="cl"><span class="c1">// under key is returned.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">tm</span> <span class="o">*</span><span class="nx">TimeMap</span><span class="p">)</span> <span class="nf">Get</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">stamp</span> <span class="o">...</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">value</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">ts</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nf">getTimeStore</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// return latest
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">stamp</span><span class="p">)</span> <span class="p">&lt;</span> <span class="mi">1</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">ts</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="nx">ts</span><span class="p">.</span><span class="nx">values</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">lookup</span> <span class="o">:=</span> <span class="nx">stamp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">v</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">ts</span><span class="p">.</span><span class="nx">timeIndex</span><span class="p">[</span><span class="nx">lookup</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">v</span><span class="p">,</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;key [%s] had no timestamp [%s]&#34;</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">lookup</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><code>Get</code> uses the variadic argument <code>stamp</code> to make it optional. <a href="https://web.archive.org/web/20231208163239/https://stackoverflow.com/questions/2032149/optional-parameters-in-go">This has some
+trade-offs but is a common approach in
+Go</a>. When
+no stamp is provided, we return the last element within <code>values</code> as this will be
+the last element added. When the stamp is provided, we look it up in the
+<code>timeIndex</code>. By using <code>time.Time</code>, i’m requiring precision down to the
+nanosecond, which might not be desired, so you can work with the time precision
+on your insert / lookups. For the sake of testing, you can easily capture some
+known time stamps and test <code>Get</code>, heres how I’ve done it in <code>main</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// validate Get for latest
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nx">spew</span><span class="p">.</span><span class="nf">Dump</span><span class="p">(</span><span class="nx">tm</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;dog&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// validate get for each stamp
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">for</span> <span class="nx">stamp</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">tm</span><span class="p">.</span><span class="nx">times</span><span class="p">[</span><span class="s">&#34;dog&#34;</span><span class="p">].</span><span class="nx">timeIndex</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">noise</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">&#34;dog&#34;</span><span class="p">,</span> <span class="nx">stamp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;At %s: %s\n&#34;</span><span class="p">,</span> <span class="nx">stamp</span><span class="p">,</span> <span class="nx">noise</span><span class="p">.</span><span class="nx">val</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Next let’s implement <code>GetBefore</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// GetBefore returns all values stored for key, where their insertion time is
+</span></span></span><span class="line"><span class="cl"><span class="c1">// equal to or before stamp.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">tm</span> <span class="o">*</span><span class="nx">TimeMap</span><span class="p">)</span> <span class="nf">GetBefore</span><span class="p">(</span><span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">stamp</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">)</span> <span class="p">([]</span><span class="o">*</span><span class="nx">value</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">ts</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nf">getTimeStore</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// locate the lowest element with a timestamp lower than stamp
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">idx</span> <span class="o">:=</span> <span class="nx">sort</span><span class="p">.</span><span class="nf">Search</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nx">ts</span><span class="p">.</span><span class="nx">values</span><span class="p">),</span> <span class="kd">func</span><span class="p">(</span><span class="nx">i</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">bool</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">ts</span><span class="p">.</span><span class="nx">values</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">stamp</span><span class="p">.</span><span class="nf">After</span><span class="p">(</span><span class="nx">stamp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">})</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// return the list in for of [0:n). When n is 0, meaning the first element
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// is after stamp, an empty list is returned.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">return</span> <span class="nx">ts</span><span class="p">.</span><span class="nx">values</span><span class="p">[:</span><span class="nx">idx</span><span class="p">],</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>This uses <a href="https://web.archive.org/web/20231208163239/https://cs.opensource.google/go/go/+/refs/tags/go1.20.2:src/sort/search.go;l=58">binary
+search</a>
+via the <a href="https://web.archive.org/web/20231208163239/https://pkg.go.dev/sort#Search">sort.Search</a> function in the standard library.
+The nice thing about <code>sort.Search</code> is that it finds the
+<strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong><strong>lowest</strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong> element that matches
+the condition. The index returned, <code>idx</code>, can be used to return a subset of the
+slice with the <code>[:idx]</code> notation. Note that in this notation <code>idx</code> is not
+inclusive, thus it works perfect for us in all cases. This can also be tested in
+<code>main</code> using the following logic:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// collect a list of all stamps for dog
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nx">collectedStamps</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">{}</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">tm</span><span class="p">.</span><span class="nx">times</span><span class="p">[</span><span class="s">&#34;dog&#34;</span><span class="p">].</span><span class="nx">values</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">collectedStamps</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">collectedStamps</span><span class="p">,</span> <span class="nx">v</span><span class="p">.</span><span class="nx">stamp</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nx">stampIdxToTest</span> <span class="o">:=</span> <span class="mi">2</span>
+</span></span><span class="line"><span class="cl"><span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;searching before %s\n&#34;</span><span class="p">,</span> <span class="nx">collectedStamps</span><span class="p">[</span><span class="nx">stampIdxToTest</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// Uncomment this and pass testTime below to test a time before all elements
+</span></span></span><span class="line"><span class="cl"><span class="c1">//testTime, err := time.Parse(&#34;2006-01-02&#34;, &#34;2006-01-02&#34;)
+</span></span></span><span class="line"><span class="cl"><span class="c1">// if err != nil {
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 	panic(err)
+</span></span></span><span class="line"><span class="cl"><span class="c1">// }
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nx">before</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">tm</span><span class="p">.</span><span class="nf">GetBefore</span><span class="p">(</span><span class="s">&#34;dog&#34;</span><span class="p">,</span> <span class="nx">collectedStamps</span><span class="p">[</span><span class="nx">stampIdxToTest</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="nx">spew</span><span class="p">.</span><span class="nf">Dump</span><span class="p">(</span><span class="nx">before</span><span class="p">)</span>
+</span></span></code></pre></div><p>And that’s it! Now we have a fully functioning <code>TimeMap</code> is <code>Set</code>, <code>Get</code>, and
+<code>GetBefore</code> implemented.</p>
+<p>Wrapping up, here are a few things to consider about this solution:</p>
+<ul>
+<li>All variants of get return a pointer to a value, this would allow the caller
+to mutate the value, so returning a copy might be desirable.</li>
+<li><code>TimeMap</code> is not thread safe, thread safety would require locks/mutexs.</li>
+<li>There are many things this code is simplifying for brevity, e.g. <code>panic(err)</code>.
+After all, this is a coding interview, so it’s not meant to be practical 😆.</li>
+</ul>
+<h2 id="closing">Closing</h2>
+<p>While the original interview question is interesting, it may be too complex for
+a standard coding interview. However, the exercise does offer valuable insight
+into the process of designing efficient data structures and algorithms, in
+contrast to a more straightforward binary search implementation. As a final
+note, I should disclose that I’m not a fan of live coding interviews like this.
+Trust me when I say that the pressure causes me to seem like I’m programming for
+the first time in my life 🙂. While I do think orgs that can afford it should
+consider a more thoughtful/practical interview process, these kinds of exercises
+are really fun!</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#enhancements">Enhancements</a></li>
+<li><a href="index.html#solution-design">Solution: Design</a></li>
+<li><a href="index.html#solution-code">Solution Code</a></li>
+<li><a href="index.html#closing">Closing</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 16:32:39 Dec 08, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:16:47 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.537
+  exclusion.robots: 0.022
+  exclusion.robots.policy: 0.01
+  esindex: 0.011
+  cdx.remote: 5.898
+  LoadShardBlock: 82.753 (3)
+  PetaboxLoader3.datanode: 42.907 (4)
+  PetaboxLoader3.resolve: 108.166 (2)
+  load_resource: 94.07
+-->

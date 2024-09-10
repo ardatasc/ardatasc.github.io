@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="kubernetes-network-policy-apis">Kubernetes Network Policy APIs</h1>
+<p>This post explores multiple ways network policy can be expressed in Kubernetes.
+This includes the native API and CNI-plugin specific Custom Resource Definitions
+(CRD). By understanding these different approaches, you will be able to make an
+informed decision around what is best for your environment!</p>
+<p>Enforcing network policy in a Kubernetes cluster is a common pattern. By
+enforcing rules with the same technology facilitating the pod network, you can
+achieve granular levels of segmentation. It also enables you to use constructs
+familiar to Kubernetes. For example, allowing traffic based on
+<a href="https://web.archive.org/web/20231208150001/https://kubernetes.io/docs/concepts/overview/working-with-objects/labels">labels</a>.
+Kubernetes provides
+<a href="https://web.archive.org/web/20231208150001/https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicy</a>
+as a first class API. If you have a Container Networking Interface (CNI) plugin
+that supports it, these rules are enforced. However, the standard Kubernetes
+<code>NetworkPolicy</code> API can be limiting. This is why providers such as
+<a href="https://web.archive.org/web/20231208150001/https://www.projectcalico.org/">Calico</a> and <a href="https://web.archive.org/web/20231208150001/https://cilium.io/">Cilium</a> offer
+their own network policy CRDs.</p>
+<b><a href="https://web.archive.org/web/20231208150001/https://youtu.be/pqYR7e3H4ME">Click here to watch the video version of this content.</a></b>
+<h2 id="kubernetes-networkpolicy">Kubernetes NetworkPolicy</h2>
+<p><code>NetworkPolicy</code> objects can be added to any Kubernetes cluster. In order for
+these policies to be enforced, your cluster must run a CNI plugin that respects
+these policies. Common CNI plugins with this support are as follows.</p>
+<ul>
+<li><a href="https://web.archive.org/web/20231208150001/https://cilium.io/">Cilium</a></li>
+<li><a href="https://web.archive.org/web/20231208150001/https://www.projectcalico.org/">Calico</a></li>
+<li><a href="https://web.archive.org/web/20231208150001/https://www.weave.works/">Weave</a></li>
+<li><a href="https://web.archive.org/web/20231208150001/https://github.com/projectcalico/canal">Canal</a></li>
+</ul>
+<p>By default, Kubernetes clusters do not restrict traffic. Pods can communicate
+with any other pods. External clients can also communicate with pods, assuming
+they have a way to route to the cluster's virtual IPs (VIP).</p>
+<p><code>NetworkPolicy</code> is namespace scoped. Rules defined in the policy allow traffic
+and are combined additively. This raises the following question. If Kubernetes
+allows all traffic and added rules are only for allowing traffic, how would you
+<strong>restrict</strong> traffic?</p>
+<p>When a <code>NetworkPolicy</code> object is introduced to a namespace, all traffic not
+explicitly allowed becomes denied. This new implicit deny-all (minus what rules
+you created) applies to everything satisfying the <code>spec.podSelector</code>. This
+behavioral change trips up many newcomers of <code>NetworkPolicy</code>.</p>
+<p>A namespace-wide policy can be created by setting the <code>podSelector</code> value to
+<code>{}</code>.</p>
+<p>Consider the following manifest that allows <code>pod-a</code> to receive traffic from
+<code>pod-b</code> and egress to it. It is a <strong>namespace-wide</strong> policy due to the
+<code>spec.podSelector</code>.</p>
+<pre tabindex="0"><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: team-netpol
+  namespace: org-1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # allow all inbound traffic on port 80
+  - from:
+    ports:
+    - protocol: TCP
+      port: 80
+  egress:
+  # allow DNS traffic
+  - to:
+    ports:
+    - protocol: UDP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: org-2
+    - podSelector:
+        matchLabels:
+          app: team-b
+    ports:
+    - protocol: TCP
+      port: 80
+</code></pre><p>Traffic is allowed from <code>team-a</code> to <code>team-b</code>. Traffic is also accepted by
+<code>team-a</code> when trying to reach it on port 80.</p>
+<a href="https://web.archive.org/web/20231208150001/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-1.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208150001im_/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-1.png">
+</a>
+<p>The above demonstrates the impact this policy has on the cluster. Since <code>team-a</code>
+accepts all ingress on port <code>80</code>, <code>team-b</code> can egress to it. <code>team-a</code> is also
+enabled to egress to <code>team-b</code>. However, should <code>team-a</code> want to reach
+<code>google.com</code>, it will be blocked due to the fact that it is <strong>not</strong> explicitly
+allowed. <code>team-b</code> on the other hand can reach <code>google.com</code> as there is no
+<code>NetworkPolicy</code> present in the <code>org-2</code> namespace.</p>
+<p>Interestingly, if you were to move <code>team-b</code> into the same namespace as <code>team-a</code>,
+<code>team-b</code> would no longer be able to send traffic to <code>team-a</code>.</p>
+<a href="https://web.archive.org/web/20231208150001/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-2.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208150001im_/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-2.png">
+</a>
+<p>Now that <code>team-b</code> is part of the <code>org-1</code> namespace, it is beholden to the
+implicit deny brought on by the policy. It can no longer accept ingress and its
+egress capabilities are limited to itself. These are the side-effects one should
+expect when implementing namespace-wide policies (via <code>spec.podSelecter: {}</code>).</p>
+<p>To limit the impact of a policy, the <code>spec.podSelector</code> can be set to <code>team-a</code>,
+re-opening all ingress and egress traffic for pods without the label <code>app: team-a</code>.</p>
+<pre tabindex="0"><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: team-netpol
+  namespace: org-1
+spec:
+  podSelector:
+    matchLabels:
+      app: team-a
+</code></pre>
+<a href="https://web.archive.org/web/20231208150001/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-3.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208150001im_/https://octetz.s3.us-east-2.amazonaws.com/netpol-s-3.png">
+</a>
+<p>Now the implicit denial rules are scoped to <code>team-a</code>. <code>team-b</code> (and pods without
+the label <code>app: team-a</code>) can accept ingress and create egress traffic freely.</p>
+<p>As we have seen, there is flexibility to create workload-specific policies and
+namespace-wide policies. Your choice depends on the workloads and how you
+administer your namespaces. An example of a blanket policy that restricts all
+ingress traffic to pods in a namespace but does not restrict egress is as
+follows.</p>
+<pre tabindex="0"><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: org-1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+</code></pre><p>This is a common pattern that allows application teams to open ingress access as
+they see fit. Some clusters are setup to provision namespaces with an initial
+policy such as the above on namespace create. Achieving this requires extra
+engineering work.</p>
+<p><code>NetworkPolicy</code> has more features not highlighted here. Visit the
+<a href="https://web.archive.org/web/20231208150001/https://kubernetes.io/docs/concepts/services-networking/network-policies">NetworkPolicy</a>
+documentation for examples.</p>
+<h2 id="limitations">Limitations</h2>
+<p>Over time, <code>NetworkPolicy</code> has become more feature rich. For example,
+traditionally it only supported ingress rules. It also did not allow for
+specifying IP CIDRs in rules. CNI plugins, such as Calico, have proven out these
+capabilities and brought enhancements upstream. However, there are still
+limitations you may care about.</p>
+<p>A list of common limitations are as follows.</p>
+<ul>
+<li>No explicit deny rules.</li>
+<li>Lacking support for advanced expressions on selectors.</li>
+<li>No layer 7 rules.
+<ul>
+<li>No limiting certain HTTP methods, paths, etc.</li>
+</ul>
+</li>
+<li>No cluster-wide policy.</li>
+</ul>
+<p>To address these limitations, CNI plugins such as Calico and Cilium offer their
+own network policy CRDs.</p>
+<p>A limitation I have found most interesting is the lack of cluster-wide policy in
+the native API. This ask is rooted in a desire to achieve micro-segmentation
+across workloads via one source of truth (manifest). In the next section, you'll
+see an example of this and the Calico CRDs.</p>
+<h2 id="networkpolicy-crds">NetworkPolicy CRDs</h2>
+<p>Calico offers a <code>NetworkPolicy</code> CRD and a <code>GlobalNetworkPolicy</code> CRD. These CRDs
+are applied using <code>calicoctl</code>. Depending on your Calico deployment, they are
+written to <code>kube-apiserver</code> or an etcd. The <code>NetworkPolicy</code> CRD is namespace
+scoped like the Kubernetes <code>NetworkPolicy</code> API. It includes a larger feature set
+such as the deny rules, levels of rule resolution, L7 rules, and more. The
+<code>GlobalNetworkPolicy</code> CRD is similar but is cluster-scoped. A rule applied in
+this CRD impacts every pod that satisfies its selector(s).</p>
+<p>The upcoming example applies a &quot;default-deny-all&quot; policy to the cluster. It will
+make an exception for <code>kube-system</code> by allowing all traffic to any namespace
+with the label <code>name: kube-system</code>. Namespaces do not have this label by
+default. The following command will add it.</p>
+<pre tabindex="0"><code>kubectl label namespaces kube-system name=kube-system
+</code></pre><p>Assume you want to deny traffic for pods in non-system namespaces by default.
+Teams can add their own namespace-scoped policies to allow routes. Achieving
+&quot;micro-segmentation&quot;. This is a great use case for <code>GlobalNetworkPolicy</code>.
+Consider the following CRD.</p>
+<pre tabindex="0"><code># This GlobalNetworkPolicy uses Calico&#39;s CRD
+# (https://docs.projectcalico.org/v3.5/reference/calicoctl/resources/globalnetworkpolicy)
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: global-deny-all
+spec:
+  # order controls the precedence. Calico applies the policy with the lowest value first.
+  # Kubernetes NetworkPolicy does not support order. They are automatically converted to an order
+  # value of 1000 by Calico. Setting this value to 2000, provides flexibility for 999 additional
+  # GlobalNetworkPolicies to be added and ensures Kubernetes namespace-scoped policies always take
+  # precedence.
+  order: 2000
+  types:
+  - Ingress
+  - Egress
+
+  # egress network rules
+  egress:
+  # Allow all egress traffic from kube-system.
+  - action: Allow
+    destination: {}
+    source:
+      namespaceSelector: name == &#39;kube-system&#39;
+
+  # Allow egress DNS traffic to any destination.
+  - action: Allow
+    protocol: UDP
+    destination:
+      nets:
+        - 0.0.0.0/0
+      ports:
+        - 53
+
+  # ingress network rules
+  ingress:
+  # Allow all ingress traffic for the kube-system namespace.
+  - action: Allow
+    destination:
+      namespaceSelector: name == &#39;kube-system&#39;
+    source: {}
+</code></pre><p>Applying the above policy can be applied as follows.</p>
+<pre tabindex="0"><code>DATASTORE_TYPE=kubernetes \
+    KUBECONFIG=~/.kube/config
+    calicoctl apply -f global-deny-all.yaml
+</code></pre><blockquote>
+<p><code>calicoctl</code> is available for <a href="https://web.archive.org/web/20231208150001/https://github.com/projectcalico/calicoctl/releases">download on
+github</a>.</p>
+</blockquote>
+<a href="https://web.archive.org/web/20231208150001/https://octetz.s3.us-east-2.amazonaws.com/global-netpol-s-1.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208150001im_/https://octetz.s3.us-east-2.amazonaws.com/global-netpol-s-1.png">
+</a>
+<p>As seen above, this would block all egress and ingress traffic in namespaces
+outside of <code>kube-system</code>. With the exception of DNS traffic (<code>UDP:53</code>). This one
+manifest has cluster-wide control. However, teams can still apply Kubernetes
+<code>NetworkPolicy</code> on top of that to &quot;poke holes&quot; for their egress and ingress
+needs. For example, if you wanted to open all egress traffic to <code>pod-a</code> in the
+<code>org-1</code> namespace, the following Kubernetes <code>NetworkPolicy</code> could be applied to
+the <code>org-1</code> namespace.</p>
+<pre tabindex="0"><code>apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: team-netpol
+  namespace: org-1
+spec:
+  podSelector:
+    matchLabels:
+      app: team-a
+  policyTypes:
+  - Egress
+</code></pre>
+<a href="https://web.archive.org/web/20231208150001/https://octetz.s3.us-east-2.amazonaws.com/global-netpol-s-2.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208150001im_/https://octetz.s3.us-east-2.amazonaws.com/global-netpol-s-2.png">
+</a>
+<p>Now the <code>team-a</code> pod can egress to <code>google.com</code>. It can also egress to <code>team-b</code>,
+but due to the <code>GlobalNetworkPolicy</code>, <code>team-b</code> is not accepting ingress traffic.
+To resolve this, an allow rule for ingress would need to be added to the <code>org-2</code>
+namespace.</p>
+<p>This example can also be achieved if every team's namespace has a Kubernetes
+<code>NetworkPolicy</code> that blocks all traffic by default. This does have trade-offs
+though. Not only are those <code>NetworkPolicy</code> objects less flexible, you now have
+<em>N</em> locations you need to update if you wish to change things about your
+&quot;default-deny&quot; rule.</p>
+<p>For more details on the CNI-plugin specific policies mentioned throughout this
+post, see the following links.</p>
+<ul>
+<li>
+<p><a href="https://web.archive.org/web/20231208150001/https://docs.cilium.io/en/v1.4/kubernetes/policy/#ciliumnetworkpolicy">Cilium:
+CiliumNetworkPolicy</a></p>
+<ul>
+<li>applied via <code>kubectl</code></li>
+<li>namespace scoped</li>
+<li>advanced rules and capabilities</li>
+<li>do not mix with standard k8s <code>NetworkPolicy</code></li>
+</ul>
+</li>
+<li>
+<p><a href="https://web.archive.org/web/20231208150001/https://docs.projectcalico.org/v3.5/reference/calicoctl/resources/globalnetworkpolicy#entityrule">Calico:
+GlobalNetworkPolicy</a></p>
+<ul>
+<li>applied via <code>calicoctl</code></li>
+<li>cluster scoped</li>
+<li>advanced rules and capabilities</li>
+<li>mix with standard k8s <code>NetworkPolicy</code></li>
+</ul>
+</li>
+<li>
+<p><a href="https://web.archive.org/web/20231208150001/https://docs.projectcalico.org/v3.5/reference/calicoctl/resources/networkpolicy">Calico:
+NetworkPolicy</a></p>
+<ul>
+<li>applied via <code>calicoctl</code></li>
+<li>namespace scoped</li>
+<li>advanced rules and capabilities</li>
+<li>mix with standard k8s <code>NetworkPolicy</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="which-should-i-use">Which Should I Use?</h2>
+<p>It depends. It could be both! The upside to using Kubernetes-native
+<code>NetworkPolicy</code> is it is agnostic to your CNI plugin, making the definitions
+portable across plugins. Policies defined in the cluster <em>should</em> act the same
+in Weave, Cilium, Calico, and more. However, if some advanced features are
+important to you, you may consider using a plugin-specific CRD. Should you
+choose to change CNI plugins in the future, you may find yourself re-writing
+network rules.</p>
+<p>I personally see value in the global (cluster-wide) policies offered by Calico.
+Thus I prefer to mix both CNI plugin-specific CRDs with Kubernetes-native
+<code>NetworkPolicy</code>. For example, cluster administrators can create
+<code>GlobalNetworkPolicies</code> defining a set of <code>cluster-wide</code> truths about how
+networking works. Teams using the cluster create their own namespace-scoped
+<code>NetworkPolicy</code> using the Kubernetes-native <code>NetworkPolicy</code>. Your ability to
+take this approach depends on your CNI plugin. For example, Calico supports
+mixing their CRDs and Kubernetes <code>NetworkPolicy</code>. However, Cilium recommends you
+choose one or the other, based on their docs:</p>
+<blockquote>
+<p>It is recommended to only use one of the above policy types [Kubernetes vs
+Cilium CRD] at a time to minimize unintended effects arising from the
+interaction between the policies.</p>
+</blockquote>
+<h2 id="summary">Summary</h2>
+<p>I hope this post sheds light on the capabilities of the Kubernetes
+<code>NetworkPolicy</code> API and enhancements available through CNI plugin-specific CRDs.
+If you have questions, comments, or feedback, please reach me
+<a href="https://web.archive.org/web/20231208150001/https://twitter.com/joshrosso">@joshrosso</a>.</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#kubernetes-networkpolicy">Kubernetes NetworkPolicy</a></li>
+<li><a href="index.html#limitations">Limitations</a></li>
+<li><a href="index.html#networkpolicy-crds">NetworkPolicy CRDs</a></li>
+<li><a href="index.html#which-should-i-use">Which Should I Use?</a></li>
+<li><a href="index.html#summary">Summary</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 15:00:01 Dec 08, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:20:00 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.505
+  exclusion.robots: 0.016
+  exclusion.robots.policy: 0.007
+  esindex: 0.014
+  cdx.remote: 66.663
+  LoadShardBlock: 384.07 (3)
+  PetaboxLoader3.datanode: 205.167 (4)
+  PetaboxLoader3.resolve: 429.013 (2)
+  load_resource: 470.073
+-->

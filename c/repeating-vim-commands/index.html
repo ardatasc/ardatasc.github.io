@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="recording-and-repeating-commands-in-vim">Recording and Repeating Commands in Vim</h1>
+<p>Have you ever found yourself in an editor, repeating some mundane string
+manipulation task line after line? You're barely awake wondering if this is the
+pinnacle of your software engineering career. If so, you're not alone. In this
+post you'll explore my favorite feature of vim, macros. Macros save substantial
+time on these kinds of tasks. It also helps remain efficient when your regex
+powers are failing you.</p>
+<b><a href="https://web.archive.org/web/20231208163603/https://youtu.be/Hd33Q0ZjZuk">Click here to watch the video version of this content.</a></b>
+<h2 id="identify-a-pattern">Identify a Pattern</h2>
+<p>To start off, copy the following HTML into a file.</p>
+<pre tabindex="0"><code>&lt;html&gt;
+&lt;head&gt;
+&lt;link rel=&#34;stylesheet&#34; type=&#34;text/css&#34; href=&#34;styles.css&#34;&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+
+  &lt;p&gt;octetz.com by &lt;a href=&#34;https://twitter.com/joshrosso&#34;&gt;@joshrosso&lt;/a&gt;&lt;/p&gt;
+        &lt;ul&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/k8s-controllers-vs-operators&#34;&gt;Operators and Controllers, What is the Difference?&lt;/a&gt; [ October 13th, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/k8s-static-pods&#34;&gt;Kubernetes Static Pods&lt;/a&gt; [ October 12th, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/vim-as-go-ide&#34;&gt;Vim as a Go (Golang) IDE using LSP and vim-go&lt;/a&gt; [ April 24th, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/k8s-network-policy-apis&#34;&gt;Kubernetes Network Policy APIs&lt;/a&gt; [ April 22nd, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/contour-adv-ing-and-delegation&#34;&gt;Contour: Advanced Ingress with Envoy&lt;/a&gt; [ April 12th, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/ha-control-plane-k8s-kubeadm&#34;&gt;Highly Available Control Plane with kubeadm 1.14+&lt;/a&gt; [ March 26th, 2019 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/rr-setup&#34;&gt;Configuring Route Reflectors in Calico&lt;/a&gt; [ December 10th, 2018 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/setting-up-psps&#34;&gt;Setting Up Pod Security Policies&lt;/a&gt; [ December 7th, 2018 ]&lt;/li&gt;
+                &lt;li&gt;&lt;a href=&#34;posts/secure-port-k8s-cm-sched&#34;&gt;Securing Communication to Controller Manager and Scheduler&lt;/a&gt; [ December 5th, 2018 ]&lt;/li&gt;
+        &lt;/ul&gt;
+&lt;/p&gt;
+&lt;p&gt;stay updated: &lt;a href=&#34;https://octetz.com/rss/feed.xml&#34;&gt;rss&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;i&gt;&lt;font color=&#34;#cccccc&#34;&gt;Feel free to steal content; attribution discouraged.&lt;/font&gt;&lt;/i&gt;&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre><p>This snippet is an older version of this website’s index. Assume you want to
+move the dates from the right to the left.</p>
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-website-image.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-website-image.png">
+</a>
+<p>There are many ways to accomplish this. For me, it’s fastest to run a few
+commands on each line to delete (and implicitly yank) the date and move it to
+the front of each line. The key is to ensure the sequence of commands used <strong>are
+repeatable</strong> on every line. Once you master this mindset, the efficiency gains
+can be ridiculous!</p>
+<p>Breaking down the html and image above, there are a few patterns you can
+identify.</p>
+<ol>
+<li>Each line item starts with <code>&lt;li&gt;</code>.</li>
+<li>Each date starts with <code>[ </code>.
+<ol>
+<li>The space is included.</li>
+</ol>
+</li>
+<li>Each date ends with <code> ]</code>.
+<ol>
+<li>The space is included.</li>
+</ol>
+</li>
+</ol>
+<h2 id="record-commands">Record Commands</h2>
+<p>Now you’re ready to record commands using the identified pattern above to move
+the dates. In this section, i’ll walk you through each command and its impact.</p>
+<ol>
+<li>Set your cursor to the beginning of the first list element.</li>
+<li>Press <code>q</code> to start recording
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-initial-q.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-initial-q.png">
+</a>
+</li>
+<li>Press <code>d</code> to assign the recording to your d key.
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-save-to-d.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-save-to-d.png">
+</a>
+</li>
+<li>Press a key sequence that moves the date to the front of the line. My
+sequence is as follows.
+<ol>
+<li><code>|</code>: go to begging of line</li>
+<li><code>/[ </code>: move cursor to start of date</li>
+<li><code>v</code>: enter visual selection mod</li>
+<li><code>/ ]</code>: select to end of date</li>
+<li><code>d</code>: delete (and yank) the date</li>
+<li><code>|</code>: go to beginning of line</li>
+<li><code>/&gt;&lt;</code>: place cursor at end of list element</li>
+<li><code>p</code>: paste date after list element</li>
+<li><code>j</code>: go to next line</li>
+</ol>
+</li>
+<li>Press <code>q</code> to end the recording.
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/vim-command-sequence.gif" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/vim-command-sequence.gif">
+</a>
+</li>
+</ol>
+<p>You've recorded that entire sequence under <code>d</code>. Admittedly, 1-9 above are
+<strong>not</strong> the most efficient ways to achieve the task at hand. Vim gurus around
+the world are likely sick to their stomachs reading this. But the great thing
+is, perfection in this sequence doesn't matter. It is recorded and repeatable!</p>
+<h2 id="replay-commands">Replay Commands</h2>
+<p>With your sequence recorded in <code>d</code>, it's time to recall it across multiple
+lines.</p>
+<ol>
+<li>Move your cursor to the next line you'd like to manipulate.
+<ol>
+<li>Note that you started your recording with <code>|</code>, so not matter where in the
+line your cursor is, recalling the recording will still work!</li>
+</ol>
+</li>
+<li>Recall the command with <code>@d</code>.</li>
+<li>After recalling <code>@d</code>, you can instead hit <code>@@</code> to recall the last recalled
+recording.</li>
+<li>Continue this until all the lines are modified.
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/recording-vim-recall.gif" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/recording-vim-recall.gif">
+</a>
+</li>
+</ol>
+<p>Just like that, you've run a repeatable, mundane, task across 9 lines of this
+file! You can imagine how helpful this can be if there were thousands of lines.
+Speaking of that, there is one more trick you can use to speed up the process
+even more.</p>
+<ol>
+<li>Undo all the date modifications done to this file.</li>
+<li>Move your cursor to the first list element.</li>
+<li>Press <code>9@d</code> and hit enter (full recording follows).
+<a href="https://web.archive.org/web/20231208163603/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-full.gif" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208163603im_/https://octetz.s3.us-east-2.amazonaws.com/vim-recording-full.gif">
+</a>
+</li>
+</ol>
+<p>Pretty rad, eh ;) ?</p>
+<h2 id="summary">Summary</h2>
+<p>I hope you've enjoyed using macros as much as I do. With a little practice, they
+can save you a ton of time and perhaps a bit of your sanity.</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#identify-a-pattern">Identify a Pattern</a></li>
+<li><a href="index.html#record-commands">Record Commands</a></li>
+<li><a href="index.html#replay-commands">Replay Commands</a></li>
+<li><a href="index.html#summary">Summary</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 16:36:03 Dec 08, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:19:11 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.669
+  exclusion.robots: 0.025
+  exclusion.robots.policy: 0.012
+  esindex: 0.014
+  cdx.remote: 7.453
+  LoadShardBlock: 95.381 (3)
+  PetaboxLoader3.datanode: 61.113 (4)
+  PetaboxLoader3.resolve: 105.615 (3)
+  load_resource: 83.095
+-->

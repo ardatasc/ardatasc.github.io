@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="loading-local-jdk-docs-in-an-ide">Loading Local JDK Docs in an IDE</h1>
+<p>Over the US's Thanksgiving break, I started playing around with &quot;modern&quot; Java.
+Around 5 years ago it was my primary language for all development (I worked in
+middle ware). Since then, I've pretty much only written Go. After setting up
+Intellij as my Java IDE, I quickly ran into a problem. I could not figure out
+where download the JDK JavaDocs. I wanted this as I use the docs quite a bit to
+traverse through various classes and functions. Instead, when I hit the
+&quot;external docs&quot; shortcut, nothing happened. This post covers how to find the JDK
+JavaDocs and set it up in Intellij. While these examples focus on Intellij, you
+may find this information useful for your own IDE.</p>
+<b><a href="https://web.archive.org/web/20240228151304/https://youtu.be/FfnTR9Gv9Gc">Click here to watch the video version of this content.</a></b>
+<h2 id="set-remote-documentation-url">Set Remote Documentation URL</h2>
+<p>First, I should acknowledge it is easy to point Intellij at the JDK JavaDocs
+remotely. The URL Oracle uses consistent URL pathing. For example, to get the
+Java 13 docs, you can visit
+<a href="https://web.archive.org/web/20240228151304/https://docs.oracle.com/en/java/javase/13/docs/api">https://docs.oracle.com/en/java/javase/13/docs/api</a>.
+To load this into Intellij, you open <code>File &gt; Project Structure</code>. From there you
+select your SDK and add a remote documentation path, as shown below.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/intellij-java.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/intellij-java.png">
+</a>
+<p>You'll then get an input box where you can put an API URL like the one above and
+done! However, I am not a fan of remote documentation. I fly on planes and have
+spotty connection all the time. I want to quickly load the documentation
+locally.</p>
+<h2 id="downloading-jdk-javadocs">Downloading JDK JavaDocs</h2>
+<p>Given this download exists on Oracle's website, you can bet it'll be a pain. If
+not egregious to find, they'll probably make you sell your first born and
+register with their marketing department before you can even <em>think</em> about
+viewing the docs. <em>Sigh</em>. However, here is how you can fast track it. As far as
+I can tell, Oracle only keeps LTS and current Java version docs linked on their
+site. I did find some StackOverflow posts with links to things like Java
+12...but you may just want to choose the closest version.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/java-version-table.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/java-version-table.png">
+</a>
+<p>In my case, I'm using Java 13. So I headed to the Java SE Development Kit
+Downloads page at
+<a href="https://web.archive.org/web/20240228151304/https://www.oracle.com/technetwork/java/javase/downloads/jdk13-downloads-5672538.html">https://www.oracle.com/technetwork/java/javase/downloads/jdk13-downloads-5672538.html</a>.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/downloads.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/downloads.png">
+</a>
+<p>Looking at the page, you'll notice a Documentation tab. But that would be too
+easy. You won't find downloadable documentation there. Instead you'll find a
+bunch of random things including but not limited to binary code licensing
+information...<em>rolls eyes</em>.</p>
+<p><strong>Ignore that page</strong> and head to the &quot;main&quot; download page, which you can find at
+<a href="https://web.archive.org/web/20240228151304/https://www.oracle.com/technetwork/java/javase/downloads/index.html">https://www.oracle.com/technetwork/java/javase/downloads/index.html</a>.
+From this page, if you scroll to the bottom, you'll see an <strong>Additional
+Resources</strong> section.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/javadocs.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/javadocs.png">
+</a>
+<p>Click the download button for your version of Java. Of course, you're going to
+have to accept a license agreement (goodbye first born), but then you should get
+a zip of all the JavaDocs.</p>
+<h2 id="adding-documentation-to-intellij">Adding Documentation to Intellij</h2>
+<p>First, you'll want to find a good location to store the docs. I unzipped them in
+my <code>$JAVA_HOME</code>, located at <code>/usr/lib/jvm/java-13-jdk</code>. Unzipping places files
+in a <code>docs</code> directory, which is perfect for me.</p>
+<pre tabindex="0"><code>unzip ~/Downloads/jdk-13.0.1_doc-all.zip -d /usr/lib/jvm/java-13-jdk
+</code></pre><pre tabindex="0"><code>ls -l /usr/lib/jvm/java-13-jdk
+</code></pre><pre tabindex="0"><code>4096 Nov 29 20:34 .
+4096 Nov 29 17:57 ..
+4096 Nov 29 17:59 bin
+  26 Nov 29 17:56 conf -&gt; ../../../../etc/java13-jre
+4096 Oct  6 05:36 docs
+4096 Nov 29 17:59 include
+4096 Nov 29 17:59 jmods
+  27 Nov 29 17:56 legal -&gt; ../../../share/licenses/jre
+4096 Nov 29 17:59 lib
+1235 Nov 29 17:56 release
+</code></pre><p>In Intellij, return to <code>File &gt; Project Structure &gt; SDKs &gt; Documentation Paths</code>
+and click the plus sign. You can then select the location of your new <code>docs</code>
+folder as seen below.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/intellij-java-local.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/intellij-java-local.png">
+</a>
+<p>Now, if you use something in the standard library, you should be able to call
+for external documentation.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/external-docs.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/external-docs.png">
+</a>
+<p>Upon selecting this option, a browser window will open pointed to the JavaDocs
+on your local machine.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/local-javadoc-browser.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/local-javadoc-browser.png">
+</a>
+<h2 id="downloading-javadocs-for-dependencies">Downloading JavaDocs for Dependencies</h2>
+<p>One last thing I'll leave you with. If you're using Maven, it is really easy to
+generate the JavaDocs for your dependencies/libraries so you can rely on the
+same external documentation abilities. For example, I'm using the Spring
+Framework in my current project. To download the documentation, open the maven
+panel from the right side-bar. From there, click the download button and choose
+to download documentation. There is also an option to download documentation and
+sources, which I recommend as it'll prevent you from needing to decompile
+bytecode in order to goto code in the libraries you are calling.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/maven-panel.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/maven-panel.png">
+</a>
+<p>With this complete, you can now select code or annotations from a library you're
+calling and produce the relevant JavaDoc. As seen below.</p>
+<a href="https://web.archive.org/web/20240228151304/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/spring-javadoc.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20240228151304im_/https://octetz.s3.us-east-2.amazonaws.com/loading-local-jdk-docs/spring-javadoc.png" width="800">
+</a>
+<p>I hope you found this post useful! Or at least educational as to how hard
+setting up something as simple as local JDK docs can be. Good luck with your
+Java adventures!</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#set-remote-documentation-url">Set Remote Documentation URL</a></li>
+<li><a href="index.html#downloading-jdk-javadocs">Downloading JDK JavaDocs</a></li>
+<li><a href="index.html#adding-documentation-to-intellij">Adding Documentation to Intellij</a></li>
+<li><a href="index.html#downloading-javadocs-for-dependencies">Downloading JavaDocs for Dependencies</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 15:13:04 Feb 28, 2024 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:19:02 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 3.663
+  exclusion.robots: 0.017
+  exclusion.robots.policy: 0.009
+  esindex: 0.008
+  cdx.remote: 37.848
+  LoadShardBlock: 529.17 (3)
+  PetaboxLoader3.datanode: 133.502 (4)
+  PetaboxLoader3.resolve: 518.831 (2)
+  load_resource: 179.913
+-->

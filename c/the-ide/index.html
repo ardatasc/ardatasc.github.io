@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="the-integrated-development-environment">The Integrated Development Environment</h1>
+<p>In John Carmack's interview with Lex Friedman. The topic of editors and IDEs is
+brought up. John critiques silicon valley folks for using minimalistic editors
+where they have to &quot;keep everything in their head&quot;. His claim is many of these
+folks are expecting folks to just read the code and understand it. He also leans
+into the idea that individuals of this mindset are anti-debugger.</p>
+<iframe width="640" height="360" src="https://web.archive.org/web/20231208164623if_/https://www.youtube.com/embed/tzr7hRXcwkw" title="John Carmack: Best programming setup and IDE | Lex Fridman Podcast Clips" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+<p>I understand why this is John's perspective. However, regardless of where you
+stand, I believe the reality is we're all approaching writing software
+similarly. Namely, most of us are using an IDE to some degree just how we get
+there has some variance. So, in this post, I'm going to disect the concept of an
+integrated development environment and attempt to justify why the choice we make
+doesn't matter...that much.</p>
+<h2 id="integrated-tools">Integrated Tools</h2>
+<p>Let's start by defining the term IDE.
+<a href="https://web.archive.org/web/20231208164623/https://en.wikipedia.org/wiki/Integrated_development_environment">Wikipedia</a>
+perfectly states: <em>&quot;The boundary between an IDE and other parts of the broader
+software development environment is not well-defined&quot;</em>. So, for the purpose of
+this writing, I'll define IDE as:</p>
+<p><strong>A program that integrates tools (other programs) in hopes of making developers
+more productive.</strong></p>
+<p>By this definition, an application where you can type characters, <a href="https://web.archive.org/web/20231208164623/https://en.wikipedia.org/wiki/Intelligent_code_completion">get code
+completion</a>, and run
+tests would be considered an IDE. Let's take a look at some popular IDEs:</p>
+<ul>
+<li>Intellij (Idea/Goland/Pycharm)</li>
+<li>Visual Studio Code</li>
+<li>(n)vim</li>
+</ul>
+<p>These programs have a lot in common. That is, they come with some
+baseline functionality and provide addons (plugins) that can provide new
+functionality. Let's consider the above 3 where we add support for Go and a
+vulnerability scanner.</p>
+<p><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" viewbox="-0.5 -0.5 821 442" style="background-color: rgb(255, 255, 255);"><defs></defs><g><rect x="0" y="0" width="820" height="440" fill="#fff2cc" stroke="#d6b656" pointer-events="all"></rect><path d="M 230 90 L 380 90 L 380 160 L 453.63 160" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 458.88 160 L 451.88 163.5 L 453.63 160 L 451.88 156.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="20" y="10" width="210" height="160" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><rect x="20" y="10" width="210" height="30" fill="#e51400" stroke="#b20000" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 208px; height: 1px; padding-top: 25px; margin-left: 21px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">IntelliJ IDEA</div></div></div></foreignobject><text x="125" y="29" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">IntelliJ IDEA</text></switch></g><rect x="30" y="50" width="190" height="20" fill="#dae8fc" stroke="#6c8ebf" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 60px; margin-left: 31px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">text editor</div></div></div></foreignobject><text x="125" y="64" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">text editor</text></switch></g><rect x="30" y="80" width="190" height="20" fill="#647687" stroke="#314354" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 90px; margin-left: 31px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">java language features</div></div></div></foreignobject><text x="125" y="94" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">java language features</text></switch></g><rect x="30" y="110" width="190" height="20" fill="#647687" stroke="#314354" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 120px; margin-left: 31px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">git features</div></div></div></foreignobject><text x="125" y="124" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">git features</text></switch></g><rect x="30" y="140" width="190" height="20" fill="#647687" stroke="#314354" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 150px; margin-left: 31px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">terminal emulator</div></div></div></foreignobject><text x="125" y="154" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">terminal emulator</text></switch></g><path d="M 620 255 L 653.63 255" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 658.88 255 L 651.88 258.5 L 653.63 255 L 651.88 251.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="460" y="225" width="160" height="60" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 255px; margin-left: 461px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">go language features</div></div></div></foreignobject><text x="540" y="259" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">go language features</text></switch></g><path d="M 620 160 L 653.63 160" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 658.88 160 L 651.88 163.5 L 653.63 160 L 651.88 156.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="460" y="130" width="160" height="60" fill="#d80073" stroke="#a50040" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 158px; height: 1px; padding-top: 160px; margin-left: 461px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">vulnerability scanner</div></div></div></foreignobject><text x="540" y="164" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">vulnerability scanner</text></switch></g><path d="M 230 255 L 453.63 255" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 458.88 255 L 451.88 258.5 L 453.63 255 L 451.88 251.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><path d="M 230 255 L 380 255 L 380 160 L 453.63 160" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 458.88 160 L 451.88 163.5 L 453.63 160 L 451.88 156.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="20" y="190" width="210" height="130" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><rect x="30" y="230" width="190" height="20" fill="#dae8fc" stroke="#6c8ebf" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 240px; margin-left: 31px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">text editor</div></div></div></foreignobject><text x="125" y="244" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">text editor</text></switch></g><rect x="30" y="260" width="190" height="20" fill="#647687" stroke="#314354" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 270px; margin-left: 31px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">git features</div></div></div></foreignobject><text x="125" y="274" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">git features</text></switch></g><rect x="30" y="290" width="190" height="20" fill="#647687" stroke="#314354" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 300px; margin-left: 31px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">terminal emulator</div></div></div></foreignobject><text x="125" y="304" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">terminal emulator</text></switch></g><rect x="20" y="190" width="210" height="30" fill="#0050ef" stroke="#001dbc" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 208px; height: 1px; padding-top: 205px; margin-left: 21px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">VSCode</div></div></div></foreignobject><text x="125" y="209" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">VSCode</text></switch></g><path d="M 230 385 L 380 385 L 380 255 L 453.63 255" fill="none" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="stroke"></path><path d="M 458.88 255 L 451.88 258.5 L 453.63 255 L 451.88 251.5 Z" fill="rgb(0, 0, 0)" stroke="rgb(0, 0, 0)" stroke-miterlimit="10" pointer-events="all"></path><rect x="20" y="350" width="210" height="70" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><rect x="20" y="350" width="210" height="30" fill="#0050ef" stroke="#001dbc" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 208px; height: 1px; padding-top: 365px; margin-left: 21px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">neovim</div></div></div></foreignobject><text x="125" y="369" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">neovim</text></switch></g><rect x="30" y="390" width="190" height="20" fill="#dae8fc" stroke="#6c8ebf" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 188px; height: 1px; padding-top: 400px; margin-left: 31px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">text editor</div></div></div></foreignobject><text x="125" y="404" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">text editor</text></switch></g><rect x="250" y="60" width="110" height="20" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 108px; height: 1px; padding-top: 70px; margin-left: 251px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">loaded as JARs</div></div></div></foreignobject><text x="305" y="74" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">loaded as JARs</text></switch></g><rect x="250" y="210" width="110" height="35" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 108px; height: 1px; padding-top: 228px; margin-left: 251px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">loaded as node modules</div></div></div></foreignobject><text x="305" y="231" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">loaded as node mod...</text></switch></g><rect x="660" y="142.5" width="140" height="35" fill="#6a00ff" stroke="#3700cc" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 138px; height: 1px; padding-top: 160px; margin-left: 661px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">snyk scanner backend</div></div></div></foreignobject><text x="730" y="164" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">snyk scanner backend</text></switch></g><rect x="250" y="340" width="110" height="35" fill="rgb(255, 255, 255)" stroke="rgb(0, 0, 0)" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 108px; height: 1px; padding-top: 358px; margin-left: 251px;"><div data-drawio-colors="color: rgb(0, 0, 0); " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(0, 0, 0); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">loaded as lua</div></div></div></foreignobject><text x="305" y="361" fill="rgb(0, 0, 0)" font-family="jbm" font-size="12px" text-anchor="middle">loaded as lua</text></switch></g><rect x="660" y="237.5" width="140" height="35" fill="#6a00ff" stroke="#3700cc" pointer-events="all"></rect><g transform="translate(-0.5 -0.5)"><switch><foreignobject pointer-events="none" width="100%" height="100%" requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility" style="overflow: visible; text-align: left;"><div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 138px; height: 1px; padding-top: 255px; margin-left: 661px;"><div data-drawio-colors="color: #ffffff; " style="box-sizing: border-box; display: flex; ; font-size: 0px; text-align: center;"><div style="display: inline-block; font-size: 12px; font-family: jbm; color: rgb(255, 255, 255); line-height: 1.2; pointer-events: all; white-space: normal; overflow-wrap: normal;">gopls</div></div></div></foreignobject><text x="730" y="259" fill="#ffffff" font-family="jbm" font-size="12px" text-anchor="middle">gopls</text></switch></g></g><switch><g requiredfeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"></g><a transform="translate(0,-5)" xlink:href="https://www.diagrams.net/doc/faq/svg-export-text-problems" target="_blank"><text text-anchor="middle" font-size="10px" x="50%" y="100%">Text is not SVG - cannot display</text></a></switch></svg></p>
+<p>Considering the above, the differences break down to:</p>
+<ol>
+<li>What features come out of the box.</li>
+<li>The language/packaging format for loading the plugin.</li>
+<li>Default keyboard shortcuts.</li>
+<li>Configuration UI / language.</li>
+<li>The runtime of the app (JVM, Node, etc).</li>
+</ol>
+<p>Historically, there has been a lot more differentiation between IDEs. Especially
+when it came to language features. In this era, there were specific IDEs that
+were best at Java, C++, etc. While this was OK, it created a lot of
+fragmentation as you could end up with N implementations to support language
+features, not to mention each implementation could be limited in the apps that
+could use it. Today, there are certainly customizations in IDEs to make them
+flow better for certain lanuages, but the core-language features and their
+implementations have become table stakes.</p>
+<h2 id="lsp-the-equalizer">LSP: The Equalizer</h2>
+<p>The language server protocol (LSP) was</p>
+<p>LSP is certainly not perfect. For example, there's a valid critique to be had
+around the architecture of LSP. For many situations, it feels unnecessary to run
+a server communicating over JSON-RPC just to get details on language features
+for files sitting on our local file system. But given the requirements around
+portability and constraints around interoperability, I get it. Also, if you've
+ever had to work on standards before that stretched across
+use-cases/organizations, you know how hard decisions like these are.</p>
+<p>So...for the vim users in the back, be sure to thank vscode for making your
+favorite editor better!</p>
+<blockquote>
+<p>My primary IDE is neovim, so poking fun at myself too 🙂.</p>
+</blockquote>
+<h2 id="case-study-neovim">Case Study: Neovim</h2>
+<h2 id="your-choice">Your Choice</h2>
+<p>The law of triviality (bike shedding) states:</p>
+<p><em>“…people within an organization commonly or typically give disproportionate
+weight to trivial issues.”
+[<a href="https://web.archive.org/web/20231208164623/https://en.wikipedia.org/wiki/Law_of_triviality">wikipedia</a>].</em></p>
+<p>As software engineers, I can’t think of a better manifestation of this principle
+than the topic of text editors, IDEs, and generally what tools you should use.
+Thus, my conclusion is it does not matter.</p>
+<p>Especially for newer engineers, using something that is pre-baked with
+integrations you need to get work done is best. Frankly, if I had a time machine
+and went back to re-invest all my time spent learning (n)vim into deepening my
+programming knowledge, I have no doubt I’d be a better programmer. Over time, if
+you develop interest in digging into new tools, that’s awesome, just don’t let
+anyone fool you into thinking it’s going to fundamentally change your
+capabilities as an engineer.</p>
+<p>Have fun, use what you like.</p>
+<ul>
+<li>Folks trying to validate their own choices by talking others into it.</li>
+<li>Hot takes around tools.</li>
+</ul>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#integrated-tools">Integrated Tools</a></li>
+<li><a href="index.html#lsp-the-equalizer">LSP: The Equalizer</a></li>
+<li><a href="index.html#case-study-neovim">Case Study: Neovim</a></li>
+<li><a href="index.html#your-choice">Your Choice</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 16:46:23 Dec 08, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:20:59 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 0.42
+  exclusion.robots: 0.015
+  exclusion.robots.policy: 0.007
+  esindex: 0.008
+  cdx.remote: 20.806
+  LoadShardBlock: 120.606 (3)
+  PetaboxLoader3.datanode: 104.37 (4)
+  PetaboxLoader3.resolve: 277.057 (2)
+  load_resource: 303.81
+-->
