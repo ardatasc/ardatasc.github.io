@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../c.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="navigating-oci-artifacts-and-images">Navigating OCI Artifacts and Images</h1>
+<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
+<iframe src="https://web.archive.org/web/20231208161808if_/https://www.youtube.com/embed/XbUAPlZi0x0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
+</div>
+<p>OCI's <a href="https://web.archive.org/web/20231208161808/https://github.com/opencontainers/image-spec/blob/main/spec.md">image
+specification</a>
+defines the contents and conventions of container images. This vendor-neutral
+standard became prevalent as the number of container runtimes increased<sup id="fnref:1"><a href="index.html#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>,
+demanding compatibility beyond Docker. As container usage has grown, so has the
+need for assets that exist ancillary to containers. Examples include <a href="https://web.archive.org/web/20231208161808/https://www.openpolicyagent.org/docs/latest/configuration/#example-1">Open Policy
+Agent
+policies</a>,
+<a href="https://web.archive.org/web/20231208161808/https://helm.sh/blog/storing-charts-in-oci/">Helm charts</a>, and <a href="https://web.archive.org/web/20231208161808/https://carvel.dev/imgpkg/docs/v0.29.0">Carvel package
+bundles</a>. These assets do not contain a
+filesystem, which is unaligned with the <a href="https://web.archive.org/web/20231208161808/https://github.com/opencontainers/image-spec/blob/main/image-layout.md">OCI image
+specification</a>.
+As such, a need grew to define what is known as an <a href="https://web.archive.org/web/20231208161808/https://github.com/opencontainers/artifacts">OCI
+artifact</a>. Artifacts offer a more
+generic definition<sup id="fnref:2"><a href="index.html#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> for what can be stored in an OCI registry and consumed by
+clients.</p>
+<p>All this is to say that the number of OCI-compliant assets are growing and
+taking on new forms. In this new world, it's helpful to have tooling to
+introspect and work with remote OCI assets. Bonus points if this tooling is
+designed to work as a client without being a fully-baked container runtime. In
+this post, I'll be talking about
+<a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md">crane</a>,
+which is my Swiss Army knife for navigating OCI artifacts and images.</p>
+<h2 id="tooling">Tooling</h2>
+<p>While this post is about <a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md">crane</a>, there are several tools capable of interacting with OCI artifacts. Examples include:</p>
+<ul>
+<li><a href="https://web.archive.org/web/20231208161808/https://github.com/containers/skopeo"><strong><code>skopeo</code></strong></a>: Solid features for airgapped
+(sync between registry) use cases and introspection. Built on libraries found
+in <a href="https://web.archive.org/web/20231208161808/https://github.com/containers">github.com/containers</a>, which happen to be
+the libraries used for <a href="https://web.archive.org/web/20231208161808/https://podman.io/">Podman</a>. If you live in
+the Podman and/or RedHat ecosystem, this could be a good tool for you.</li>
+<li><a href="https://web.archive.org/web/20231208161808/https://carvel.dev/imgpkg/"><strong><code>imgpkg</code></strong></a>: Has features around querying and
+introspecting OCI contents. This tooling shines in creating bundles
+of configuration that can be pushed to repositories. Combined with tools like
+<code>kbld</code>, it can build robust configurations enabling the locking of images
+referenced in configurations by their digest values<sup id="fnref:3"><a href="index.html#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup>.</li>
+</ul>
+<p>While the above (and some missing) tools are great, I grab for <code>crane</code> everytime
+I'm working with the discovery and introspection of OCI assets. I find it's UX
+to be solid, <a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane.md">commands to be feature
+rich</a>,
+it is compatible with other Unix tooling, and it's underlying library
+<a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry">go-containerregistry</a> is
+easy to work with at the Go/library level.</p>
+<p>If you wish to follow along with this post, <a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/tree/main/cmd/crane#installation">complete the Installation section of
+crane's GitHub
+page</a>.</p>
+<h2 id="discovery">Discovery</h2>
+<p>First, you need a way to query the available tags on a given image. This can be
+done using the <code>ls</code> command. For example, you can determine which <code>kube-apiserver</code>
+images are available for the <code>1.24.x</code> release.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ crane ls k8s.gcr.io/kube-apiserver <span class="p">|</span> grep -i 1.24
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sha256-c5113882ff00af29730f560f6567de63644f10c0d51f2416c55b8a6649abe282.sig
+</span></span><span class="line"><span class="cl">v1.24.0
+</span></span><span class="line"><span class="cl">v1.24.0-alpha.0
+</span></span><span class="line"><span class="cl">v1.24.0-alpha.1
+</span></span><span class="line"><span class="cl">v1.24.0-alpha.2
+</span></span><span class="line"><span class="cl">v1.24.0-alpha.3
+</span></span><span class="line"><span class="cl">v1.24.0-alpha.4
+</span></span><span class="line"><span class="cl">v1.24.0-beta.0
+</span></span><span class="line"><span class="cl">v1.24.0-rc.0
+</span></span><span class="line"><span class="cl">v1.24.0-rc.1
+</span></span><span class="line"><span class="cl">v1.24.1
+</span></span><span class="line"><span class="cl">v1.24.1-rc.0
+</span></span><span class="line"><span class="cl">v1.24.2
+</span></span><span class="line"><span class="cl">v1.24.2-rc.0
+</span></span><span class="line"><span class="cl">v1.24.3-rc.0
+</span></span></code></pre></div><p>Now, let's figure out what is the <a href="https://web.archive.org/web/20231208161808/https://github.com/opencontainers/image-spec/blob/main/descriptor.md#digests">digest
+value</a>
+for the <code>v1.24.2</code> image.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ crane digest k8s.gcr.io/kube-apiserver:v1.24.2
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">sha256:433696d8a90870c405fc2d42020aff0966fb3f1c59bdd1f5077f41335b327c9a
+</span></span></code></pre></div><p>This digest is great, but doesn't tell the entire story. With the introduction
+of the <a href="https://web.archive.org/web/20231208161808/https://github.com/opencontainers/image-spec/blob/main/image-index.md#oci-image-index-specification">OCI Image Index
+Specification</a>,
+an asset may now contain a list that points to image manifests specific to
+the platform and architecture of the target system. This feature enables all
+platforms and architectures to point to the same tag, even though each needs to
+run its own unique image, as detailed below.</p>
+<a href="https://web.archive.org/web/20231208161808/https://files.joshrosso.com/img/site/navigating-oci/multi-arch-pull.png" target="octetz-img">
+<img class="center" src="https://web.archive.org/web/20231208161808im_/https://files.joshrosso.com/img/site/navigating-oci/multi-arch-pull.png" width="800&quot;">
+</a>
+<p>To understand which images are available, use the <code>manifest</code> command. This also identifies exactly where the image lives. Below are the images for Linux arm64 and amd64.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">$ crane manifest k8s.gcr.io/kube-apiserver:v1.24.2 |\
+</span></span><span class="line"><span class="cl">    jq &#39;.manifests[] | select(.platform.architecture==&#34;amd64&#34; or .platform.architecture==&#34;arm64&#34;)&#39;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">  &#34;mediaType&#34;: &#34;application/vnd.docker.distribution.manifest.v2+json&#34;,
+</span></span><span class="line"><span class="cl">  &#34;size&#34;: 949,
+</span></span><span class="line"><span class="cl">  &#34;digest&#34;: &#34;sha256:e31b9dc1170027a5108e880ab1cdc32626fc7c9caf7676fd3af1ec31aad9d57e&#34;,
+</span></span><span class="line"><span class="cl">  &#34;platform&#34;: {
+</span></span><span class="line"><span class="cl">    &#34;architecture&#34;: &#34;amd64&#34;,
+</span></span><span class="line"><span class="cl">    &#34;os&#34;: &#34;linux&#34;
+</span></span><span class="line"><span class="cl">  }
+</span></span><span class="line"><span class="cl">}
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">  &#34;mediaType&#34;: &#34;application/vnd.docker.distribution.manifest.v2+json&#34;,
+</span></span><span class="line"><span class="cl">  &#34;size&#34;: 949,
+</span></span><span class="line"><span class="cl">  &#34;digest&#34;: &#34;sha256:a650cc38f804847dfa3a1043fa5c55d479be4e9c87be2ba1c3d58b803eec33e9&#34;,
+</span></span><span class="line"><span class="cl">  &#34;platform&#34;: {
+</span></span><span class="line"><span class="cl">    &#34;architecture&#34;: &#34;arm64&#34;,
+</span></span><span class="line"><span class="cl">    &#34;os&#34;: &#34;linux&#34;
+</span></span><span class="line"><span class="cl">  }
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></div><p>This image's manifest list implies there are multiple architectures available!
+This means if a container runtime pulls down this tag, it'll use the manifest in
+the list related to its architecture. For example, you'd expect <code>containerd</code>
+running on an ARM Linux host to pull down the container with the starting digest
+value of <code>a650cc</code>. It's also worth mentioning that if you ran <code>manifest</code> against
+a tag that does not have multiple architectures, you'd get a list of each of the
+container's layers along with each layer's digest value.</p>
+<h2 id="introspection">Introspection</h2>
+<p>At some point, you'll want to look into the actual contents of the asset. To
+start, you can look at the content of an image, namely <code>kube-apiserver</code>.
+The <code>export</code> command will allow downloading the tarball locally. Using the
+<code>-v</code> flag will give insight into how the image and its layers are being
+resolved.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ crane <span class="nb">export</span> -v k8s.gcr.io/kube-apiserver:v1.24.2 - <span class="p">|</span> tar xv
+</span></span></code></pre></div><p>There's too much output to paste here, but looking at the logs from the above
+command, there are some key pieces of information. For example, note that
+<code>export</code> is being run against the tag <code>v1.24.2</code>, which doesn't point to an
+image, but instead a manifest pointing to platform/architecture specific images.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">2022/06/21 14:09:27 &lt;-- 200 https://k8s.gcr.io/v2/kube-apiserver/manifests/v1.24.2 (54.20325ms)
+</span></span><span class="line"><span class="cl">2022/06/21 14:09:27 HTTP/2.0 200 OK
+</span></span><span class="line"><span class="cl">Content-Length: 1694
+</span></span><span class="line"><span class="cl">Alt-Svc: h3=&#34;:443&#34;; ma=2592000,h3-29=&#34;:443&#34;; ma=2592000,h3-Q050=&#34;:443&#34;; ma=2592000,h3-Q046=&#34;:443&#34;; ma=2592000,h3-Q043=&#34;:443&#34;; ma=2592000,quic=&#34;:443&#34;; ma=2592000; v=&#34;46,43&#34;
+</span></span><span class="line"><span class="cl">Content-Type: application/vnd.docker.distribution.manifest.list.v2+json
+</span></span><span class="line"><span class="cl">Date: Tue, 21 Jun 2022 20:09:27 GMT
+</span></span><span class="line"><span class="cl">Docker-Content-Digest: sha256:433696d8a90870c405fc2d42020aff0966fb3f1c59bdd1f5077f41335b327c9a
+</span></span><span class="line"><span class="cl">Docker-Distribution-Api-Version: registry/2.0
+</span></span><span class="line"><span class="cl">Server: Docker Registry
+</span></span><span class="line"><span class="cl">X-Frame-Options: SAMEORIGIN
+</span></span><span class="line"><span class="cl">X-Xss-Protection: 0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">{
+</span></span><span class="line"><span class="cl">   &#34;schemaVersion&#34;: 2,
+</span></span><span class="line"><span class="cl">   &#34;mediaType&#34;: &#34;application/vnd.docker.distribution.manifest.list.v2+json&#34;,
+</span></span><span class="line"><span class="cl">   &#34;manifests&#34;: [
+</span></span><span class="line"><span class="cl">      {
+</span></span><span class="line"><span class="cl">         &#34;mediaType&#34;: &#34;application/vnd.docker.distribution.manifest.v2+json&#34;,
+</span></span><span class="line"><span class="cl">         &#34;size&#34;: 949,
+</span></span><span class="line"><span class="cl">         &#34;digest&#34;: &#34;sha256:e31b9dc1170027a5108e880ab1cdc32626fc7c9caf7676fd3af1ec31aad9d57e&#34;,
+</span></span><span class="line"><span class="cl">         &#34;platform&#34;: {
+</span></span><span class="line"><span class="cl">            &#34;architecture&#34;: &#34;amd64&#34;,
+</span></span><span class="line"><span class="cl">            &#34;os&#34;: &#34;linux&#34;
+</span></span><span class="line"><span class="cl">         }
+</span></span><span class="line"><span class="cl">      },
+</span></span><span class="line"><span class="cl">      {
+</span></span><span class="line"><span class="cl">         &#34;mediaType&#34;: &#34;application/vnd.docker.distribution.manifest.v2+json&#34;,
+</span></span><span class="line"><span class="cl">         &#34;size&#34;: 949,
+</span></span><span class="line"><span class="cl">         &#34;digest&#34;: &#34;sha256:a650cc38f804847dfa3a1043fa5c55d479be4e9c87be2ba1c3d58b803eec33e9&#34;,
+</span></span><span class="line"><span class="cl">         &#34;platform&#34;: {
+</span></span><span class="line"><span class="cl">            &#34;architecture&#34;: &#34;arm64&#34;,
+</span></span><span class="line"><span class="cl">            &#34;os&#34;: &#34;linux&#34;
+</span></span><span class="line"><span class="cl">         }
+</span></span><span class="line"><span class="cl">      }
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">      &lt;-- other images retracted --&gt;
+</span></span><span class="line"><span class="cl">   ]
+</span></span><span class="line"><span class="cl">}
+</span></span></code></pre></div><p>Since my system is <code>amd64</code>, the image <code>e31b9d</code> is downloaded. If
+you follow the logs you'll see that image is resolved and its manifest
+containing references to its layers are located and then downloaded.</p>
+<p>All that aside, you'll end up with the container contents on your local file
+system.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ ls
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">bin             etc             lib             run             tmp
+</span></span><span class="line"><span class="cl">boot            go-runner       proc            sbin            usr
+</span></span><span class="line"><span class="cl">dev             home            root            sys             var
+</span></span></code></pre></div><p>From here you can easily inspect or modify its contents. For example, using <code>go</code>
+tooling, its possible to determine exactly how the <code>kube-apiserver</code> binary was built.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ go version -m usr/local/bin/kube-apiserver
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">usr/local/bin/kube-apiserver: go1.18.3
+</span></span><span class="line"><span class="cl">        path    k8s.io/kubernetes/cmd/kube-apiserver
+</span></span><span class="line"><span class="cl">        build   -asmflags<span class="o">=</span><span class="nv">all</span><span class="o">=</span>-trimpath<span class="o">=</span>/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes
+</span></span><span class="line"><span class="cl">        build   -compiler<span class="o">=</span>gc
+</span></span><span class="line"><span class="cl">        build   -gcflags<span class="o">=</span><span class="s2">&#34;all=-trimpath=/workspace/src/k8s.io/kubernetes/_output/dockerized/go/src/k8s.io/kubernetes &#34;</span>
+</span></span><span class="line"><span class="cl">        build   -ldflags<span class="o">=</span><span class="s2">&#34;&lt;-- ommited --&gt;&#34;</span>
+</span></span><span class="line"><span class="cl">        build   -tags<span class="o">=</span>selinux,notest
+</span></span><span class="line"><span class="cl">        build   <span class="nv">CGO_ENABLED</span><span class="o">=</span><span class="m">0</span>
+</span></span><span class="line"><span class="cl">        build   <span class="nv">GOARCH</span><span class="o">=</span>amd64
+</span></span><span class="line"><span class="cl">        build   <span class="nv">GOOS</span><span class="o">=</span>linux
+</span></span><span class="line"><span class="cl">        build   <span class="nv">GOAMD64</span><span class="o">=</span>v1
+</span></span></code></pre></div><p>While great for introspecting container images, this is particularly useful when
+you want to look into configuration stored in an OCI artifact. In the world of
+<a href="https://web.archive.org/web/20231208161808/https://carvel.dev/">Carvel</a>, bundles of configuration can be stored in a
+container registry. For example, the official <a href="https://web.archive.org/web/20231208161808/https://github.com/vmware-tanzu/package-for-kpack">kpack
+package</a> is available at
+<code>projects.registry.vmware.com/tce/kpack</code>. Using <code>ls</code> can reveal the version
+<code>0.5.2</code> is available, and using <code>export</code>, you can look inside it.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ crane <span class="nb">export</span> projects.registry.vmware.com/tce/kpack:0.5.2 - <span class="p">|</span> tar xv
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">x .
+</span></span><span class="line"><span class="cl">x .imgpkg
+</span></span><span class="line"><span class="cl">x .imgpkg/images.yml
+</span></span><span class="line"><span class="cl">x config
+</span></span><span class="line"><span class="cl">x config/ca_cert.yaml
+</span></span><span class="line"><span class="cl">x config/kapp-config.yaml
+</span></span><span class="line"><span class="cl">x config/kp-config.yaml
+</span></span><span class="line"><span class="cl">x config/overlay.yaml
+</span></span><span class="line"><span class="cl">x config/proxy.yaml
+</span></span><span class="line"><span class="cl">x config/release
+</span></span><span class="line"><span class="cl">x config/release/release-0.5.2-rc.9.yaml
+</span></span><span class="line"><span class="cl">x config/schema.yaml
+</span></span><span class="line"><span class="cl">x config/version.yml
+</span></span></code></pre></div><p>Inside <code>config/</code> there are multiple Kubernetes YAML files which are part of
+this package bundle.</p>
+<h2 id="copying">Copying</h2>
+<p>A final use case to cover is replicating artifacts and images between
+registries. One reason to do this is when you need to make an image available in
+an internet-restricted environment. For example, when you need an image like
+<code>k8s.gcr.io/kube-apiserver</code> to be available in your private registery that runs
+in the same network as your clusters.</p>
+<p>Copying an artifact or image is done using the <code>copy</code> command.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ crane cp k8s.gcr.io/kube-apiserver:v1.24.2 index.docker.io/joshrosso/kube-apiserver:v1.24.2
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">2022/06/21 15:54:37 Copying from k8s.gcr.io/kube-apiserver:v1.24.2 to index.docker.io/joshrosso/kube-apiserver:v1.24.2
+</span></span><span class="line"><span class="cl">2022/06/21 15:54:39 pushed blob: sha256:d3377ffb7177cc4becce8a534d8547aca9530cb30fac9ebe479b31102f1ba503
+</span></span><span class="line"><span class="cl">2022/06/21 15:54:40 pushed blob: sha256:63186d32234e6ca9751e21f84bda2a6f5025eb3a44196f6dc4d0e9268ba7bbe0
+</span></span><span class="line"><span class="cl">2022/06/21 15:54:40 pushed blob: sha256:36698cfa5275e0bda70b0f864b7b174e0758ca122d8c6a54fb329d70082c73f8
+</span></span><span class="line"><span class="cl">2022/06/21 15:54:41 pushed blob: sha256:b71d10928c08172a60416656c3b43c55ccbe83255f704e9cb4108351994aaaed
+</span></span><span class="line"><span class="cl">&lt;-- multiple logs removed --&gt;
+</span></span><span class="line"><span class="cl">2022/06/21 15:55:12 index.docker.io/joshrosso/kube-apiserver:v1.24.2: digest: sha256:433696d8a90870c405fc2d42020aff0966fb3f1c59bdd1f5077f41335b327c9a size: <span class="m">1694</span>
+</span></span></code></pre></div><p>During this <code>copy</code> operation, all platform/architecture combinations are copied
+and each image digest is retained. You can verify this by running a <code>diff</code>
+against the 2 manifests.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ <span class="nv">COPY</span><span class="o">=</span><span class="k">$(</span>crane manifest index.docker.io/joshrosso/kube-apiserver:v1.24.2<span class="k">)</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>    <span class="nv">ORIG</span><span class="o">=</span><span class="k">$(</span>crane manifest k8s.gcr.io/kube-apiserver:v1.24.2<span class="k">)</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>    diff &lt;<span class="o">(</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">COPY</span><span class="si">}</span><span class="o">)</span> &lt;<span class="o">(</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">ORIG</span><span class="si">}</span><span class="o">)</span>
+</span></span></code></pre></div><h2 id="shoutouts">Shoutouts</h2>
+<p>This post is largely a callout to the awesomeness of
+<a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry">google/go-containerregistry</a>
+and its command line tool
+<a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/tree/main/cmd/crane">crane</a>.
+Thanks to all the <a href="https://web.archive.org/web/20231208161808/https://github.com/google/go-containerregistry/graphs/contributors">maintainers and contributors</a> that have built these tools and worked on documentation.</p>
+<div class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p><a href="https://web.archive.org/web/20231208161808/https://www.youtube.com/watch?v=-BfhZiJzLeA">YouTube: Container Runtime and Image Format Standards - What it Means to be “OCI-Certified” [I] - Jeff Borek</a>&#160;<a href="index.html#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2">
+<p><a href="https://web.archive.org/web/20231208161808/https://dlorenc.medium.com/oci-artifacts-explained-8f4a77945c13">Medium: OCI Artifacts Explained - Dan Lorenc</a>&#160;<a href="index.html#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:3">
+<p><a href="https://web.archive.org/web/20231208161808/https://carvel.dev/kbld/docs/v0.34.0/resolving/#generating-resolution-imgpkg-lock-output">Carvel Docs: Generating resolution imgpkg lock output</a>&#160;<a href="index.html#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#tooling">Tooling</a></li>
+<li><a href="index.html#discovery">Discovery</a></li>
+<li><a href="index.html#introspection">Introspection</a></li>
+<li><a href="index.html#copying">Copying</a></li>
+<li><a href="index.html#shoutouts">Shoutouts</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
+<!--
+     FILE ARCHIVED ON 16:18:08 Dec 08, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 03:17:01 Sep 10, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+-->
+<!--
+playback timings (ms):
+  captures_list: 1.589
+  exclusion.robots: 0.018
+  exclusion.robots.policy: 0.008
+  esindex: 0.01
+  cdx.remote: 12.071
+  LoadShardBlock: 77.259 (3)
+  PetaboxLoader3.datanode: 53.497 (4)
+  PetaboxLoader3.resolve: 91.824 (2)
+  load_resource: 105.831
+-->
