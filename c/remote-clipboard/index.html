@@ -106,7 +106,7 @@ likely be done by using an init system like systemd or homebrew/launchctl to run
 it as a service that constantly triggers. However, for the sake of a generic
 example, here’s how you can connect using a simple bash loop:</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="k">while</span> <span class="nb">true</span>
-</span></span><span class="line"><span class="cl">  <span class="k">do</span> ssh -i ~/.ssh/joshrosso.pem 192.168.1.77 <span class="s1">&#39;cat ~/clip&#39;</span> <span class="p">|</span> pbcopy
+</span></span><span class="line"><span class="cl">  <span class="k">do</span> ssh -i ~/.ssh/ardatasci.pem 192.168.1.77 <span class="s1">&#39;cat ~/clip&#39;</span> <span class="p">|</span> pbcopy
 </span></span><span class="line"><span class="cl"><span class="k">done</span>
 </span></span></code></pre></div><p>In the above, you’ll change <code>192.168.1.77</code> to your host’s IP address.
 Additionally, if not using MacOS, you’ll swap <code>pbcopy</code> out for something that
