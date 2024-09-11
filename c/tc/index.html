@@ -24,7 +24,7 @@
   </div>
   <div class="header-content-nav">
   <div class="header-content-nav-item">
-  <a href="../../c.html">content</a>
+  <a href="../../index.html">content</a>
   </div>
   <div class="header-content-nav-item">
   <a href="../../about.html">about</a>
@@ -33,9 +33,9 @@
   </div>
   </div>
 <div class="content-container">
-<div class="content"><h1 id="shaping-linux-traffic-with-tc">Shaping Linux Traffic with tc</h1>
+<div class="content"><h1 id="shaping-linux-traffic-with-tc">Linux Traffic Control With tc</h1>
 <p><code>tc</code> enables configuring Traffic Control in a Linux host. This low-level capability can be used for use cases such as implementing quality of service controls to simulating networking scenarios that can be helpful for test cases and validations of application deployments.</p>
-<p>As such, <code>tc</code> is a gem inside of Linux that is worth knowing about in your tool chain. Over the years, I've used <code>tc</code> to solve some pretty obscure use cases. For example, needing to work around a lack of network QOS and ensuring a egress proxy never saturates specific networks based on what CIDR the destination lands in. Another is simulating packet loss to better understand how an application or server responds.</p>
+<p>As such, <code>tc</code> is a gem inside of Linux that is worth knowing about in your tool chain. I've used <code>tc</code> to solve some pretty obscure use cases. For example, needing to work around a lack of network QOS and ensuring a egress proxy never saturates specific networks based on what CIDR the destination lands in. Another is simulating packet loss to better understand how an application or server responds.</p>
 <h2 id="quality-of-service">Quality of Service</h2>
 <p>To start off, we'll hone in on one use case, <a href="https://en.wikipedia.org/wiki/Quality_of_service">quality of service (QoS)</a>. You likely have seen QoS setting if you've ever setup a home network or router. Consider the following flow.</p>
 <a href="qos.jpg" >
@@ -128,12 +128,12 @@ clean
 create
 </code></pre><p>In order to test the above, you'll need 3 hosts, which I'll refer to as <code>u0</code> (client), <code>u1</code> (server), and <code>u2</code> (server). You should update the <code>DST_CIDR</code> variable to the IP of <code>u1</code> and the <code>DST_CIDR_2</code> to the IP of <code>u2</code>.</p>
 <p>Then, we'll login to <code>u1</code> and <code>u2</code>, setting up listeners using <a href="https://iperf.fr/iperf-download.php">iperf3</a>.</p>
-<pre tabindex="0"><code>josh@u1:~$ iperf3 -s -p 8080
+<pre tabindex="0"><code>arda@u1:~$ iperf3 -s -p 8080
 
 -----------------------------------------------------------
 Server listening on 8080
 -----------------------------------------------------------
-</code></pre><pre tabindex="0"><code>josh@u2:~$ iperf3 -s -p 8080
+</code></pre><pre tabindex="0"><code>arda@u2:~$ iperf3 -s -p 8080
 
 -----------------------------------------------------------
 Server listening on 8080
@@ -156,7 +156,7 @@ Accepted connection from 192.168.6.0, port 40136
 [  5]   2.00-3.00   sec  1.40 GBytes  12.0 Gbits/sec
 [  5]   3.00-4.00   sec  1.39 GBytes  11.9 Gbits/sec
 </code></pre><p>Now let's run the above script on <code>u0</code>, as sudo.</p>
-<pre tabindex="0"><code>josh@u0:~$ sudo ./throttle.sh
+<pre tabindex="0"><code>arda@u0:~$ sudo ./throttle.sh
 
 == CLEAN INIT ==
 == CLEAN DONE ==

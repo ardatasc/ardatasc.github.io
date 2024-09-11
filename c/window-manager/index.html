@@ -26,7 +26,7 @@ ardatasc
 </div>
 <div class="header-content-nav">
 <div class="header-content-nav-item">
-<a href="c.html">content</a>
+<a href="index.html">content</a>
 </div>
 <div class="header-content-nav-item">
 <a href="about.html">about</a>
@@ -38,176 +38,53 @@ ardatasc
 <div class="posts">
 <div class="posts-post" style="cursor: pointer;">
 <div class="posts-post-title">
-<a href="c/remote-clipboard/index.html">Clipboard Sharing to a Remote Dev Environment</a>
+<a href="c/remote-clipboard/index.html">Window Managers and Their Significance</a>
 </div>
 <div class="posts-post-date">
 8/16/2024</li>
 </div>
 </div>
-<!-- <div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/ring-buffer/index.html">Ring Buffer</a>
-</div>
-<div class="posts-post-date">
-8/13/2024</li>
-</div>
-</div> -->
+<div class="content-container">
+<div class="content"><h1 id="why-i-dont-care-about-my-linux-window-manager">The Linux Window Manager</h1>
+<p>Conversations around window managers can be a little contentious...but for some of us, it makes very little difference. I'm one of those humans. As much as I adore nerding out around some ultra-minimal window manager that requires you change settings by compiling its c code, at the end of the day I gain little benefit from any specific approach.</p>
 
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/pipes/index.html">Pipes: Named and Unnamed</a>
+<p>That said, I do love and prefer Linux. The fact that we're afforded these choices around window managers is what draws many of us in initially. Your computer, whether running Ubuntu or Arch, can flip a switch to run a very capable, heavy-weight manager such as <a href="https://kde.org/">KDE</a> or a manager with a binary size of ~1mb, such as <a href="https://dwm.suckless.org/">dwm</a>. Before diving too deep into my day-to-day workflow, let's set some primer around window managers.</p>
+<h2 id="window-managers">Window Managers</h2>
+<p>Window managers come in two, primary, varieties. These include stacked and tiled. Tiled are commonly composed of several &quot;workspaces&quot;, which can be switched through and host one or many windows, tiled side-by-side. They (typically, by default) do not allow windows to stack or overlap. The following screenshot, from Wikipedia, demonstrates this for i3.</p>
+<p><img src="i3.png" alt="i3.png"></p>
+<p>Stacked window managers, on the other hand, are what we conventionally think of. Especially those of us that have a history with OSX (mac) or Windows. These window managers give us floating windows that can overlap and be moved into any format on our screens. The following screenshot, from Wikipedia, demonstrates this for xfce.</p>
+<p><img src="xfce.png" alt="xfce.png"></p>
+<p>From my experience, many have associated the move to tiling managers as a more hardcore approach to interacting with Linux. Or at least one we associate with focus, minimalism, and/or getting things done. Over the years, some using i3 and others using dwm, I have found my productivity remain relatively static. I did have some super cool layouts that I loved looking at. However, I am a habitual over-optimizer. This trait sends me down constant rabbit holes of thinking through what workspace I should assign to which tasks, how I should be setting up a tiling layout for optimal focus, and many more considerations. Eventually I realized this constant customization was causing me more loss in focus than the gain I'd hoped to have leaving stacked managers behind.</p>
+<p>In short, this was a me problem, not a tiling window manager problem. Knowing myself better now, I have switched back to stacked managers, with optimizations and automation focused around my key priorities.</p>
+<h2 id="priorities">Priorities</h2>
+<p>My priorities around workflow are fairly straight forward. Given I have the attention span of a small squirrel, my key priorities are:</p>
+<ol>
+<li>Switch between key applications quickly</li>
+<li>Switch between key applications with minimal context-switching</li>
+</ol>
+<p>So switching between applications, this isn't too hard in any window manager, is it? Sure, it is not. However minimizing the thought required to jump from a to b is huge for my work. For example, at the most intense end of the spectrum, clicking around and moving windows to find firefox is less than ideal. Even using flows like alt+tab or a launcher requires me to think about where the thing is or how to find/focus it. Additionally, the applications I care about and need to switch between are fairly minimal in quantity. There are maybe 7 total with 4 key ones I constantly toggle. These are:</p>
+<ul>
+<li>Web Browser (firefox)</li>
+<li>Terminal (st)</li>
+<li>IDE (intellij)</li>
+<li>File browser (nemo)</li>
+</ul>
+<p>For me, the question is, with a key or two, can I bring up the application I need to get the task done no matter where it preexisted. Additionally, if the app isn't running, can I transparently launch it without being concerned about another shortcut or workflow?</p>
+
+<h2 id="summary">Summary</h2>
+<p>In short, over years of using many different window managers with different philosophies, I've found that the idea of easily triggering the app I need to get to is the real value add for any desktop experience. This is true for me and, at a minimum, hopefully this provided interesting perspective for your future Linux endeavors!</p>
 </div>
-<div class="posts-post-date">
-8/07/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/time-based-kv/index.html">Time-based KV Store in Go (Interview Question)</a>
-</div>
-<div class="posts-post-date">
-8/4/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/xps-arch-w11/index.html">Linux (Dual Boot) Workstation - Arch, Windows 11, Encrypted</a>
-</div>
-<div class="posts-post-date">
-7/30/2024</li>
-</div>
-</div>
-<!-- <div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/vm-networks/index.html">Virtual Machine Networking (libvirt)</a>
-</div>
-<div class="posts-post-date">
-7/28/2024</li>
-</div>
-</div> -->
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/machine-images/index.html">Configuring Virtual Images for qemu/KVM</a>
-</div>
-<div class="posts-post-date">
-7/25/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/tc/index.html">Shaping Linux Traffic with tc</a>
-</div>
-<div class="posts-post-date">
-7/22/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/window-manager/index.html">Window Managers and Their Significance</a>
-</div>
-<div class="posts-post-date">
-7/20/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/linux-hypervisor-setup/index.html">Linux Hypervisor Setup (libvirt/qemu/kvm)</a>
-</div>
-<div class="posts-post-date">
-7/19/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/linux-desktop-configuration/index.html">Linux Desktop Configuration</a>
-</div>
-<div class="posts-post-date">
-7/18/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/arch-windows-install/index.html">Arch Linux and Windows 10 (UEFI &#43; Encrypted) Install Guide</a>
-</div>
-<div class="posts-post-date">
-7/16/2024</li>
-</div>
-</div>
-<!-- <div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/local-jdk-docs-in-an-ide/index.html">Local JDK Docs in an IDE</a>
-</div>
-<div class="posts-post-date">
-7/10/2024</li>
-</div>
-</div> -->
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/controllers-and-operators/index.html">Controllers and Operators</a>
-</div>
-<div class="posts-post-date">
-7/01/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/static-pods/index.html">Kubernetes Static Pods</a>
-</div>
-<div class="posts-post-date">
-6/30/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/vim-go-ide/index.html">Vim as a Go IDE</a>
-</div>
-<div class="posts-post-date">
-06/27/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/netpol-k8s/index.html">Network Policy in Kubernetes</a>
-</div>
-<div class="posts-post-date">
-6/24/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/ha-kubeadm/index.html">HA Control Plane with kubeadm</a>
-</div>
-<div class="posts-post-date">
-6/15/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/psp/index.html">Pod Security Policy Configuration</a>
-</div>
-<div class="posts-post-date">
-6/10/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/securing-controller-and-scheduler/index.html">Securing Communication to Controller Manager and Scheduler</a>
-</div>
-<div class="posts-post-date">
-6/05/2024</li>
-</div>
-</div>
-<div class="posts-post" style="cursor: pointer;">
-<div class="posts-post-title">
-<a href="c/the-ide/index.html">The Integrated Development Environment</a>
-</div>
-<div class="posts-post-date">
-6/01/2024</li>
-</div>
-</div>
-</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="index.html#window-managers">Window Managers</a></li>
+<li><a href="index.html#priorities">Priorities</a></li>
+<li><a href="index.html#shortcuts">Shortcuts</a></li>
+<li><a href="index.html#summary">Summary</a></li>
+</ul>
 </nav>
-<article class="markdown"></article>
+</div>
+</div>
 </body>
 </html>

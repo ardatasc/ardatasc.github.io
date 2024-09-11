@@ -24,7 +24,7 @@
   </div>
   <div class="header-content-nav">
   <div class="header-content-nav-item">
-  <a href="../../c.html">content</a>
+  <a href="../../index.html">content</a>
   </div>
   <div class="header-content-nav-item">
   <a href="../../about.html">about</a>
@@ -33,7 +33,7 @@
   </div>
 </div>
 <div class="content-container">
-<div class="content"><h1 id="linux-hypervisor-setup-libvirtqemukvm">Linux Hypervisor Setup (libvirt/qemu/kvm)</h1>
+<div class="content"><h1 id="linux-hypervisor-setup-libvirtqemukvm">Linux Hypervisor Configuration</h1>
 <p>One of the best things about Linux is how easily you can throw together a few
 tools and end up with a great system. This is especially true for
 provisioning VMs. Arguably, this is one of the key things that keeps me on a
@@ -41,9 +41,7 @@ Linux desktop for my day-to-day work! However, these tools can also be used
 to turn an old laptop or desktop into a screaming hypervisor. This way you can
 laugh at all your friends with their $10,000 homelab investment while
 you're getting all the same goodness on commodity hardware :).</p>
-<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden;">
-<iframe src="https://web.archive.org/web/20240228164639if_/https://www.youtube.com/embed/HfNKpT2jo7U" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen title="YouTube Video"></iframe>
-</div>
+
 <p>This setup is what I use day-to-day to create Kubernetes environments in a
 simple, manageable way without too many abstractions getting in my way. If
 understanding and running VMs on Linuxs hosts interests you, this post is for
@@ -55,23 +53,23 @@ everything I need done. The tools are as follows.</p>
 <p><strong>key system tools:</strong></p>
 <p>These are the key tools/services/features that enable vitalization.</p>
 <ul>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://www.linux-kvm.org/page/Main_Page">kvm</a></strong>:
+<li><strong><a href="https://www.linux-kvm.org/page/Main_Page">kvm</a></strong>:
 <ul>
 <li>Kernel-based Virtual Machine</li>
 <li>Kernel module that handles CPU and memory communication</li>
 </ul>
 </li>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://www.qemu.org/">qemu</a></strong>:
+<li><strong><a href="https://www.qemu.org/">qemu</a></strong>:
 <ul>
 <li>Quick EMUlator</li>
 <li>Emulates many hardware resources such as disk, network, and USB. While it can
 emulate CPU, you'll be exposed to qemu/kvm, which delegates concerns like
-that to the KVM (which is <a href="https://web.archive.org/web/20240228164639/https://en.wikipedia.org/wiki/Hardware-assisted_virtualization">HVM</a>).</li>
+that to the KVM (which is <a href="https://en.wikipedia.org/wiki/Hardware-assisted_virtualization">HVM</a>).</li>
 <li>Memory relationship between qemu/kvm is a little more complicated but can
-be <a href="https://web.archive.org/web/20240228164639/https://www.linux-kvm.org/page/Memory">read about here</a>.</li>
+be <a href="https://www.linux-kvm.org/page/Memory">read about here</a>.</li>
 </ul>
 </li>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://libvirt.org/">libvirt</a></strong>:
+<li><strong><a href="https://libvirt.org/">libvirt</a></strong>:
 <ul>
 <li>Exposes a consistent API atop many virtualization technologies. APIs are
 consumed by client tools for provisioning and managing VMs.</li>
@@ -81,28 +79,28 @@ consumed by client tools for provisioning and managing VMs.</li>
 <p><strong>user/client tools:</strong></p>
 <p>These tools can be interacted with by users / services.</p>
 <ul>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://libvirt.org/manpages/virsh.html">virsh</a></strong>
+<li><strong><a href="https://libvirt.org/manpages/virsh.html">virsh</a></strong>
 <ul>
 <li>Command-line tools for communicating with libvirt</li>
 </ul>
 </li>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://virt-manager.org/">virt-manager</a></strong>
+<li><strong><a href="https://virt-manager.org/">virt-manager</a></strong>
 <ul>
 <li>GUI to manage KVM, qemu/kvm, xen, and lxc.</li>
-<li>Contains a <a href="https://web.archive.org/web/20240228164639/https://en.wikipedia.org/wiki/Virtual_Network_Computing">VNC</a>
+<li>Contains a <a href="https://en.wikipedia.org/wiki/Virtual_Network_Computing">VNC</a>
 and
-<a href="https://web.archive.org/web/20240228164639/https://en.wikipedia.org/wiki/Simple_Protocol_for_Independent_Computing_Environments">SPICE</a>
+<a href="https://en.wikipedia.org/wiki/Simple_Protocol_for_Independent_Computing_Environments">SPICE</a>
 client for direct graphical access to VMs.</li>
 <li>GUI alternative to <code>virsh</code>, albeit less capable.</li>
 </ul>
 </li>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://linux.die.net/man/1/virt-install">virt-install</a></strong>
+<li><strong><a href="https://linux.die.net/man/1/virt-install">virt-install</a></strong>
 <ul>
 <li>Helper tools for creating new VM guests.</li>
 <li>Part of the <code>virt-manager</code> project.</li>
 </ul>
 </li>
-<li><strong><a href="https://web.archive.org/web/20240228164639/https://linux.die.net/man/1/virt-viewer">virt-viewer</a></strong>
+<li><strong><a href="https://linux.die.net/man/1/virt-viewer">virt-viewer</a></strong>
 <ul>
 <li>UI for interacting with VMs via VNC/SPICE.</li>
 <li>Part of the <code>virt-manager</code> project.</li>
@@ -125,8 +123,8 @@ dependency, depending on your package manager.</li>
 <p>The above <em>may</em> feel overwhelming. But remember it is a look into the guts of
 all the pieces facilitating the virtualization stack. At a high-level, this
 diagram demonstrates the key relationships to understand:</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/kvm-stack.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/kvm-stack.png" width="1000">
+<a href="kvm-stack.png" target="octetz-img">
+<img src="kvm-stack.png" width="1000">
 </a>
 <p>How you install these tools depends on your package manager. My hypervisor OS is
 usually Arch, the following would install the above.</p>
@@ -146,7 +144,7 @@ usually Arch, the following would install the above.</p>
 <p>The primary tricky bit is getting permissions correct. There are a few key
 pieces to configure so your using can interact with <code>qemu:///system</code>. This
 enables VMs to run as root, which is <em>generally</em> what you'll want. This is also
-the default used by virt-manager. <a href="https://web.archive.org/web/20240228164639/https://blog.wikichoon.com/2016/01/qemusystem-vs-qemusession.html">Checkout
+the default used by virt-manager. <a href="https://blog.wikichoon.com/2016/01/qemusystem-vs-qemusession.html">Checkout
 this blog post from Colin Robinson, which calls out the
 differences</a>.</p>
 <p><code>virsh</code>, will use <code>qemu:///session</code> by default, which means CLI calls not run as
@@ -160,7 +158,7 @@ sudo chown ${YOURUSER}:${YOURGROUP} ~/.config/libvirt/libvirt.conf
 </blockquote>
 <p>When using <code>qemu:///system</code>, access is dictated by <code>polkit</code>. Here you have many
 options. Since commit
-<a href="https://web.archive.org/web/20240228164639/https://libvirt.org/git/?p=libvirt.git;a=commit;h=e94979e901517af9fdde358d7b7c92cc055dd50c">e94979e9015</a>
+<a href="https://libvirt.org/git/?p=libvirt.git;a=commit;h=e94979e901517af9fdde358d7b7c92cc055dd50c">e94979e9015</a>
 a libvirt group is included, which will have access to libvirtd. With this in
 place, you have the following options.</p>
 <ul>
@@ -217,7 +215,7 @@ drwxr-xr-x  2 root   root 4096 Apr  4 05:05 network
 drwxr-xr-x 11 nobody kvm  4096 May  6 16:16 qemu
 drwxr-xr-x  2 root   root 4096 Apr  4 05:05 swtpm
 </code></pre><p>The <code>images</code> directory is the default location a VM's disk image will be stored
-(e.g. <a href="https://web.archive.org/web/20240228164639/https://en.wikipedia.org/wiki/Qcow">qcow2</a>).</p>
+(e.g. <a href="https://en.wikipedia.org/wiki/Qcow">qcow2</a>).</p>
 <p>I typically keep ISOs locally, unless I've got a PXE flow setup in my network.
 To store ISOs, you can create an <code>isos</code> directory in <code>/var/lib/libvirtd</code>.</p>
 <pre tabindex="0"><code>mkdir /var/lib/libvirt/isos
@@ -238,14 +236,14 @@ https://mirrors.mit.edu/ubuntu-releases/18.04.4/ubuntu-18.04.4-live-server-amd64
 </li>
 <li>
 <p>Create a new virtual machine.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/create-vm-vm-mgr.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/create-vm-vm-mgr.png" width="650">
+<a href="create-vm-vm-mgr.png" target="octetz-img">
+<img src="create-vm-vm-mgr.png" width="650">
 </a>
 </li>
 <li>
 <p>Choose Local install media.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/local-install-media.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/local-install-media.png" width="650">
+<a href="local-install-media.png" target="octetz-img">
+<img src="local-install-media.png" width="650">
 </a>
 </li>
 <li>
@@ -253,8 +251,8 @@ https://mirrors.mit.edu/ubuntu-releases/18.04.4/ubuntu-18.04.4-live-server-amd64
 </li>
 <li>
 <p>Add a new pool.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/add-pool.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/add-pool.png" width="650">
+<a href="add-pool.png" target="octetz-img">
+<img src="add-pool.png" width="650">
 </a>
 </li>
 <li>
@@ -262,8 +260,8 @@ https://mirrors.mit.edu/ubuntu-releases/18.04.4/ubuntu-18.04.4-live-server-amd64
 </li>
 <li>
 <p>Set the Target Path to <code>/var/lib/libvirt/isos</code>.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/target-path.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/target-path.png" width="650">
+<a href="target-path.png" target="octetz-img">
+<img src="target-path.png" width="650">
 </a>
 </li>
 <li>
@@ -271,8 +269,8 @@ https://mirrors.mit.edu/ubuntu-releases/18.04.4/ubuntu-18.04.4-live-server-amd64
 </li>
 <li>
 <p>Select the iso and click Choose Volume.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/choose-volume.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/choose-volume.png" width="650">
+<a href="choose-volume.png" target="octetz-img">
+<img src="choose-volume.png" width="650">
 </a>
 </li>
 <li>
@@ -281,8 +279,8 @@ https://mirrors.mit.edu/ubuntu-releases/18.04.4/ubuntu-18.04.4-live-server-amd64
 <li>
 <p>You'll either be prompted to create a default network or choose the default
 network (NAT).</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/network-selection.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/network-selection.png" width="650">
+<a href="network-selection.png" target="octetz-img">
+<img src="network-selection.png" width="650">
 </a>
 <blockquote>
 <p>There are many ways to approach the network. A common approach is to setup
@@ -295,8 +293,8 @@ deeper topic, maybe for another post.</p>
 </li>
 <li>
 <p>Wait for <code>virt-viewer</code> to popup and go through the installation process.</p>
-<a href="https://web.archive.org/web/20240228164639/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/ubuntu-install.png" target="octetz-img">
-<img src="https://web.archive.org/web/20240228164639im_/https://octetz.s3.us-east-2.amazonaws.com/running-a-minimal-hypervisor/ubuntu-install.png" width="600">
+<a href="ubuntu-install.png" target="octetz-img">
+<img src="ubuntu-install.png" width="600">
 </a>
 </li>
 <li>
@@ -340,23 +338,3 @@ install procedure via the command line. This could be done directly with qemu, b
 </div>
 </body>
 </html>
-<!--
-     FILE ARCHIVED ON 16:46:39 Feb 28, 2024 AND RETRIEVED FROM THE
-     INTERNET ARCHIVE ON 03:18:10 Sep 10, 2024.
-     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
-
-     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
-     SECTION 108(a)(3)).
--->
-<!--
-playback timings (ms):
-  captures_list: 0.44
-  exclusion.robots: 0.016
-  exclusion.robots.policy: 0.007
-  esindex: 0.01
-  cdx.remote: 10.023
-  LoadShardBlock: 159.183 (3)
-  PetaboxLoader3.datanode: 93.403 (4)
-  PetaboxLoader3.resolve: 175.872 (2)
-  load_resource: 122.209
--->
