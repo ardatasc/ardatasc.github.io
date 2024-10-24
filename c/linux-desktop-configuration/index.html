@@ -34,7 +34,7 @@
   </div>
 <div class="content-container">
 <div class="content"><h1 id="linux-desktop-configuration">Linux Desktop Configuration</h1>
-<p><a href="https://web.archive.org/web/20231208155809/https://octetz.com/c/2020-2-16-arch-windows-install">In my previous post</a>, I covered installation
+<p>In my previous post, I covered installation
 of Linux, Windows, and encryption of the two operating systems. In this
 post, I'll be building on the Linux installation by describing how I bootstrap
 my desktop environment. I fully wipe my machine approximately every 2 months. I
@@ -44,11 +44,7 @@ with Arch Linux, to fall into a trap where you've tuned and customized
 everything so much, the idea of reformatting is frightening. However, as you'll
 see in this post, with some simple automation, you can ensure [fairly]
 consistent desktop environments across installs.</p>
-<b><a href="https://web.archive.org/web/20231208155809/https://youtu.be/Q_3vc-u01Bw">Click here to watch the video version of this content.</a></b>
 <h2 id="setup">Setup</h2>
-<p>My entire configuration is sourced at <a href="https://web.archive.org/web/20231208155809/https://github.com/octetz/linux-desktop">https://github.com/octetz/linux-desktop</a>.
-As described in the README, each step is triggered via a <code>make</code> command. There
-are a few key ones.</p>
 <ul>
 <li>install-packages
 <ul>
@@ -64,12 +60,12 @@ are a few key ones.</p>
 </li>
 <li>install-wm
 <ul>
-<li>Compiles and installs my fork of <a href="https://web.archive.org/web/20231208155809/https://dwm.suckless.org/">dwm</a>.</li>
+<li>Compiles and installs my fork of <a href="https://dwm.suckless.org/">dwm</a>.</li>
 </ul>
 </li>
 <li>install-terminal
 <ul>
-<li>Compiles and installs <a href="https://web.archive.org/web/20231208155809/https://st.suckless.org/">st</a>.</li>
+<li>Compiles and installs <a href="https://st.suckless.org/">st</a>.</li>
 </ul>
 </li>
 </ul>
@@ -178,13 +174,13 @@ zoom
 </code></pre><p>Due to the official and user repositories being so deep with packages, there are
 only 2 &quot;packages&quot; I compile and install manually. Those are:</p>
 <ul>
-<li><a href="https://web.archive.org/web/20231208155809/https://dwm.suckless.org/">dwm</a>: Window manager</li>
-<li><a href="https://web.archive.org/web/20231208155809/https://st.suckless.org/">st</a>: Terminal</li>
+<li><a href="https://dwm.suckless.org/">dwm</a>: Window manager</li>
+<li><a href="https://st.suckless.org/">st</a>: Terminal</li>
 </ul>
 <p>The reason I don't use pacman or AUR to install these packages is they require
 changes to source (C code) to make configuration changes. This means every
 change requires a recompilation and moving of binaries to the system's path. On
-<a href="https://web.archive.org/web/20231208155809/https://github.com/octetz/linux-desktop">octetz/linux-desktop</a>, you'll find
+ardatasc/linux-desktop, you'll find
 the source code for my dwm and st. Additionally the Makefile calls Makefiles in
 the st and dwm directories to update each.</p>
 <h2 id="configuration">Configuration</h2>
@@ -196,8 +192,8 @@ the st and dwm directories to update each.</p>
 </ul>
 <p>This is primarily accomplished with some ugly, but functional, shell scripts.</p>
 <ul>
-<li><a href="https://web.archive.org/web/20231208155809/https://github.com/octetz/linux-desktop/blob/5d8f672b9ca75f9855841dfebd8ad5d0713e61c8/pkg/configure-system.sh#L1">configure-system</a></li>
-<li><a href="https://web.archive.org/web/20231208155809/https://github.com/octetz/linux-desktop/blob/5d8f672b9ca75f9855841dfebd8ad5d0713e61c8/pkg/configure-user.sh#L1">configure-user</a></li>
+<li>configure-system</li>
+<li>configure-user</li>
 </ul>
 <h2 id="window-manager-and-desktop-initialization">Window Manager and Desktop Initialization</h2>
 <p>For window management, I use <code>xfce</code> (floating) and <code>dwm</code> (tiling). Based on the
@@ -214,7 +210,7 @@ exec startxfce4
 </code></pre><p>In the above, there are 2 essential commands for my desktop.</p>
 <ul>
 <li>
-<p>exec <a href="https://web.archive.org/web/20231208155809/https://wiki.archlinux.org/index.php/Picom">picom</a></p>
+<p>exec <a href="https://wiki.archlinux.org/index.php/Picom">picom</a></p>
 <ul>
 <li>This is the next generation of the compton compositor.</li>
 <li>Without a compositor, the X window system can have serious limitations when
@@ -241,7 +237,7 @@ dotfiles into the git repo, and allows the git history determine what has
 changed and potentially committed.</p>
 <h2 id="summary">Summary</h2>
 <p>With that, you now have a desktop environment! I hope you found this post
-interesting and <a href="https://web.archive.org/web/20231208155809/https://youtu.be/Q_3vc-u01Bw">checkout the video</a> to see it in action!</p>
+interesting!</p>
 </div>
 <div class="content-toc">
 <h3>Contents</h3>
