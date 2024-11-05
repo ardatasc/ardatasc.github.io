@@ -41,7 +41,10 @@
 
 <h2 id='explanation'>Explanation</h2>
 <p>
-  The solution starts by calculating the probability that <b>no two people share the same birthday</b>. Let’s denote:<br><br>
+  Used directly, the naive definition says we just need to count the number of ways to assign birthdays to  people such that there are two or more people who share a birthday.
+  But this counting problem is hard, since it could be Emma and Steve who share a birthday, or Steve and Naomi, or all three of them, or the three of them could share a birthday while two others in the group share a different birthday,
+  or various other possibilities.
+  <b>Instead, we may find that taking the complement may be easier</b>. Let’s denote:<br><br>
   \( n \) as the number of people in the room,
   \( P(\text{no match}) \): the probability that all \( n \) people have unique birthdays, and
   \( P(\text{at least one match}) \): the probability that at least two people share a birthday. <br>
@@ -49,17 +52,32 @@
   We start by calculating \( P(\text{no match}) \) and then use it to find \( P(\text{at least one match}) \).
 </p>
 <h3 id='math'>Calculating \( P(\text{no match}) \) </h3>
-<li><b>For 1 Person:</b> since there's no one else in the room, \( P(\text{no match}) \) is obviously \(1\).</li>
-<li><b>For 2 People:</b> They have a \( \frac{364} {365} \) chance of not sharing a birthday with the first person.</li>
-<li><b>For 3 People:</b> The third person has a \( \frac{364}{365} \cdot \frac{363}{365} \) chance of not matching either of the first two birthdays.</li>
-<p> We can extrapolate a general formula for \( k \) people. <br><br>
-  \[
-P(\text{no match}) = \prod_{k=0}^{n-1} \frac{365 - k}{365}
-\] <br><br>
-Now, to find the probability of a match, we can simply take the complement:<br><br>
+
+
+<p>Let's count how many ways we can assign birthdays to \( k \) people such that no two people share a birthday. The number of possibilities can be expresseed as:</p>
+<br><br>
+
 \[
-P(\text{at least one match}) = 1 - \prod_{k=0}^{n-1} \frac{365 - k}{365}
-\] <br><br>
+P(\text{no match}) = \frac{365 \cdot 364 ...(365 - k +1)}{365^k} \text{  or  } \prod_{k=0}^{n-1} ( 1 - \frac{k}{365})
+\], and the complement (at least one match) is:
+
+\[
+P(\text{at least one match}) = 1 - \prod_{k=0}^{n-1} (1 - \frac{k}{365})
+\]
+
+This is sort of a cumbersome calculation. Luckily, we can estimate the Probability of not matching for small \( k \) as the Taylor approximation of \( e^{-x} \) \( \approx e^\frac{-k}{365} \).
+This allows us to convert our product into a sum.
+
+\[
+P(\text{no match}) = e^{-\frac{1}{365} \cdot \sum_{k=0}^{n-1} k} \implies e^{-\frac{(n-1)n}{2 \cdot 365}}
+\]
+\[
+\therefore P(\text{match}) = 1 - e^{-\frac{(n-1)n}{2 \cdot 365}}
+\]
+
+<br><br>
+
+
 Surprisingly, at around \( k = 23 \) people we find that our probability of success becomes about \( \approx 0.5 \). We can verify this by actually simulating the situation in python.
 </p>
 <h2 id="code" >Code</h2>
@@ -69,7 +87,7 @@ import random
 def birthdaymatch():
     birthdays = set()
     count = 0
-    for i in range(367)
+    for i in range(367):
         birthday = random.randint(1, 365)
         count += 1
         if birthday in birthdays:
