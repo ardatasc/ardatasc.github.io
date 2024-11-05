@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../index.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="title">The Birthday Problem</h1>
+<p>The birthday problem (or birthday paradox) is a classic question in probability. It asks: in a group of people, what is the probability that at least two individuals share the same birthday? Surprisingly, the probability reaches 50% with just 23 people in the group. Back when I was first learning python, I thought it would be a good exercise to implement a simulation of the birthday problem. Here's what I did.</p>
+
+<h2 id='explanation'>Explanation</h2>
+<p>
+  The solution starts by calculating the probability that <b>no two people share the same birthday</b>. Let’s denote:<br><br>
+  \( n \) as the number of people in the room,
+  \( P(\text{no match}) \): the probability that all \( n \) people have unique birthdays, and
+  \( P(\text{at least one match}) \): the probability that at least two people share a birthday. <br>
+
+  We start by calculating \( P(\text{no match}) \) and then use it to find \( P(\text{at least one match}) \).
+</p>
+<h3 id='math'>Calculating \( P(\text{no match}) \) </h3>
+<li><b>For 1 Person:</b> since there's no one else in the room, \( P(\text{no match}) \) is obviously \(1\).</li>
+<li><b>For 2 People:</b> They have a \( \frac{364} {365} \) chance of not sharing a birthday with the first person.</li>
+<li><b>For 3 People:</b> The third person has a \( \frac{364}{365} \cdot \frac{363}{365} \) chance of not matching either of the first two birthdays.</li>
+<p> We can extrapolate a general formula for \( k \) people. <br><br>
+  \[
+P(\text{no match}) = \prod_{k=0}^{n-1} \frac{365 - k}{365}
+\] <br><br>
+Now, to find the probability of a match, we can simply take the complement:<br><br>
+\[
+P(\text{at least one match}) = 1 - \prod_{k=0}^{n-1} \frac{365 - k}{365}
+\] <br><br>
+Surprisingly, at around \( k = 23 \) people we find that our probability of success becomes about \( \approx 0.5 \). We can verify this by actually simulating the situation in python.
+</p>
+<h2 id="code" >Code</h2>
+<pre tabindex="0"><code>
+import random
+
+def birthdaymatch():
+    birthdays = set()
+    count = 0
+    for i in range(367)
+        birthday = random.randint(1, 365)
+        count += 1
+        if birthday in birthdays:
+            return count
+        birthdays.add(birthday)
+
+results = [birthdaymatch() for _ in range(100)]
+print('Average number of people until match:', sum(results) / len(results))
+---------------------------------------------------------------------------
+Average amount of people until match: 23.64
+</code></pre>
+<h2 id="summary">Summary</h2>
+<p>When you run this simulation, you should find that the average number of people required to find a shared birthday is close to 23, confirming the mathematical result.
+
+The birthday problem is a great example of how probability can challenge our intuition, and it’s also a fun way to explore simulations in Python. If you’d like to try running the code, experiment with different numbers of simulations and group sizes to see how the probability behaves.</p>
+</div>
+<div class="content-toc">
+<h3>Contents</h3>
+<nav id="TableOfContents">
+<ul>
+<li><a href="birthday.html#explanation">Explanation</a></li>
+<li><a href="birthday.html#math">Calculations</a></li>
+<li><a href="birthday.html#code">Code</a></li>
+<li><a href="birthday.html#summary">Summary</a></li>
+</ul>
+</nav>
+</div>
+</div>
+</body>
+</html>
