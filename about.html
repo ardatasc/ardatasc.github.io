@@ -52,6 +52,26 @@ areas. <br> I'm a currently a student at NYU and the CTO / Systems Admininistrat
 <p>If you're interested in learning more about me, <a href="resume.pdf">you'll find my resume
 here</a>.</p>
 
+<div id="dayTracker" style="font-size: 1.5em; font-weight: bold;"></div>
+
+<script>
+  const trackerKey = "dayTrackerStartTime";
+  const now = Date.now(); // current time in ms
+
+  // Get or set the start time
+  let startTime = localStorage.getItem(trackerKey);
+  if (!startTime) {
+    startTime = now;
+    localStorage.setItem(trackerKey, startTime);
+  }
+
+  // Calculate elapsed time in full 24-hour days
+  const elapsedMs = now - parseInt(startTime);
+  const dayCount = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 455;
+
+  // Display
+  document.getElementById("dayTracker").innerText = `Day ${dayCount}`;
+</script>
 
 </article>
 </html>
