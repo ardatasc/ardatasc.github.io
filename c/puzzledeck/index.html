@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="article"/>
+<title>Jane Street Puzzle Deck Edition IV | ardatasc.github.io</title>
+<link rel="icon" href="../../favicon.png" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.min.7363202e6ba39c3b4caca8b218f6f6631256ed7a41cd2f8bf46550651b07cb31.css" integrity="">
+</head>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+<body>
+  <div class="header">
+  <div class="header-content">
+  <div class="header-content-title">
+  ardatasc
+  </div>
+  <div class="header-content-nav">
+  <div class="header-content-nav-item">
+  <a href="../../index.html">content</a>
+  </div>
+  <div class="header-content-nav-item">
+  <a href="../../about.html">about</a>
+  </div>
+  </div>
+  </div>
+  </div>
+<div class="content-container">
+<div class="content"><h1 id="title">Jane Street Puzzle Deck Edition IV Solution</h1>
+<p>Recently, I recieved a cool card deck and a t-shirt of questionable quality from a guest speaker at Columbia. Upon further inspection yesterday I realized that there was an extraneous card that held a cryptic clue:</p>
+<img src="IMG_3240.jpg" object-fit: width: 25% height:25%></img>
+
+<p> The deck itself is a standard 52 cards; The intruiging parts are that:
+  <ul>
+    <li>Each card has has a compass on its back showing North.</li>
+    <li>The face cards all hold different clues: the Jacks hold different card addresses in their hands.</li>
+    <li>Each King holds 1-4 swords.</li>
+    <li>Some cards have hollow pips.</li>
+    <li><b>The clue card states that 'final word comes from the Queen'.</b></li>
+  </ul>
+<img src="image2.jpg"></img>
+<h3>Solution</h3>
+<p>Most of the challenge from this puzzle was due to the open-ended nature of the 'leads'. The wording of the clue card played a big part in finding the solution.
+  <br><br>My first attempt was to organize the cards into a series of sequences denoted by the Jacks and ordered by the Kings. This didn't lead anywhere, except for the next step, which was using all of the other hollow-pip cards to fill the sequences. After this step, I was kind of stuck but re-reading the clue card gave me the information I needed: specifically, in the form of the word trace and the phrase "pointedly implanted". That hinted towards some sort of geometric pattern so I started looking for polygonal patterns.
+</p>
+<img src="image3.jpg"></img>
+<p>Observe the hollow pips at each column. If you were to draw a line between each hollow pip in the column in descending order, you would find the letters:
+<b> Z, L, C, L, Z, Y, O, I, I, A[CE], Q[UEEN].</b> The last two were simple guesses based on the clue card if I'm being honest.</p>
+<br><br>
+<p>At this penultimate step, I figured out the actual use of the Jacks. They denoted the order of the letters.</p>
+<p>A quick python script for style points:</p>
+<img src="image4.png"></img>
+<br><br>
+<img src="image5.png"></img>
+<p>There you have it! I also think the t-shirt is a puzzle but I haven't had the time to take a look at it.</p>
+
+</div>
+<div class="content-toc">
+  <h3>Contents</h3>
+  <nav id="TableOfContents">
+  <ul>
+    <li><a href="index.html#solution">Solution</a></li>
+  </ul>
+  </nav>
+  </div>
+</body>
+</html>
