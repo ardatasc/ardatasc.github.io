@@ -38,14 +38,14 @@
   .cal-header h2 {
     margin: 0;
     font-size: 1.2rem;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
   }
 
   .cal-nav {
     background: none;
     border: 1px solid #555;
     color: inherit;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 1rem;
     cursor: pointer;
     padding: 0.3rem 0.7rem;
@@ -63,7 +63,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
   }
 
   .cal-dow {
@@ -113,14 +113,14 @@
 
   /* Time slots panel */
   .cal-slots-title {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 1rem;
     margin: 0 0 0.8rem;
     color: #ec5565;
   }
 
   .cal-slots-date {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     margin-bottom: 1rem;
     color: #888;
@@ -131,7 +131,7 @@
     width: 100%;
     padding: 0.6rem 0;
     margin-bottom: 0.5rem;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     border: 1px solid #555;
     border-radius: 6px;
@@ -154,14 +154,14 @@
   }
 
   .cal-no-slots {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     color: #666;
     font-style: italic;
   }
 
   .cal-placeholder {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     color: #666;
   }
@@ -171,11 +171,11 @@
   }
 
   .cal-info h1 {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
   }
 
   .cal-info p {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     color: #888;
     font-size: 0.9rem;
     line-height: 1.6;
@@ -186,7 +186,7 @@
     width: 100%;
     padding: 0.7rem 0;
     margin-top: 1.2rem;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.9rem;
     border: none;
     border-radius: 6px;
@@ -211,7 +211,7 @@
     width: 100%;
     padding: 0.5rem;
     margin-bottom: 0.5rem;
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     border: 1px solid #555;
     border-radius: 6px;
@@ -230,7 +230,7 @@
   }
 
   .cal-form-label {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.75rem;
     color: #888;
     margin-bottom: 0.3rem;
@@ -238,11 +238,12 @@
   }
 
   .cal-form-group {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    max-width: 540px;
   }
 
   .cal-success {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.9rem;
     color: #ec5565;
     font-weight: bold;
@@ -250,14 +251,14 @@
   }
 
   .cal-success-detail {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.85rem;
     color: #888;
     line-height: 1.6;
   }
 
   .cal-error {
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: inter, sans-serif;
     font-size: 0.8rem;
     color: #ec5565;
     margin-top: 0.5rem;
@@ -268,12 +269,22 @@
     cursor: wait;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     .cal-container {
+      flex-direction: column;
       padding: 0 1rem;
+    }
+    .cal-left {
+      min-width: unset;
     }
     .cal-right {
       flex: 1 1 100%;
+    }
+    .cal-form-group {
+      max-width: 100%;
+    }
+    .cal-info {
+      padding: 0 1rem;
     }
   }
 </style>
@@ -318,6 +329,8 @@ ardatasc
       <div class="cal-placeholder">Select a date to see available times.</div>
     </div>
   </div>
+
+  <div id="formPanel"></div>
 </div>
 
 <script>
@@ -354,6 +367,7 @@ ardatasc
   const grid = document.getElementById('calGrid');
   const label = document.getElementById('monthLabel');
   const slotsPanel = document.getElementById('slotsPanel');
+  const formPanel = document.getElementById('formPanel');
 
   function render() {
     label.textContent = MONTH_NAMES[viewMonth] + ' ' + viewYear;
@@ -415,6 +429,7 @@ ardatasc
   function renderSlots() {
     if (!selectedDate) {
       slotsPanel.innerHTML = '<div class="cal-placeholder">Select a date to see available times.</div>';
+      formPanel.innerHTML = '';
       return;
     }
 
@@ -430,20 +445,6 @@ ardatasc
       html += '<button class="' + cls + '" data-slot="' + slot + '">' + formatTime(slot) + '</button>';
     });
 
-    if (selectedSlot) {
-      html += '<div class="cal-form-group">';
-      html += '<label class="cal-form-label">Your name</label>';
-      html += '<input class="cal-form-field" type="text" id="bookName" placeholder="Jane Doe" required>';
-      html += '<label class="cal-form-label">Your email</label>';
-      html += '<input class="cal-form-field" type="email" id="bookEmail" placeholder="jane@example.com" required>';
-      html += '<label class="cal-form-label">What do you want to chat about? (optional)</label>';
-      html += '<input class="cal-form-field" type="text" id="bookTopic" placeholder="Quick intro, project idea, etc.">';
-      html += '</div>';
-    }
-
-    html += '<button class="cal-confirm" id="confirmBtn"' + (selectedSlot ? '' : ' disabled') + '>Confirm Booking</button>';
-    html += '<div id="formError"></div>';
-
     slotsPanel.innerHTML = html;
 
     slotsPanel.querySelectorAll('.cal-slot').forEach(btn => {
@@ -453,63 +454,90 @@ ardatasc
       });
     });
 
-    const confirmBtn = document.getElementById('confirmBtn');
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', () => {
-        if (!selectedSlot || !selectedDate) return;
+    renderForm();
+  }
 
-        const nameEl = document.getElementById('bookName');
-        const emailEl = document.getElementById('bookEmail');
-        const topicEl = document.getElementById('bookTopic');
-        const errorEl = document.getElementById('formError');
-
-        if (!nameEl.value.trim() || !emailEl.value.trim()) {
-          errorEl.innerHTML = '<div class="cal-error">Please fill in your name and email.</div>';
-          return;
-        }
-
-        const dateStr = selectedDate.toLocaleDateString('en-US', {
-          weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-        });
-
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Sending...';
-        confirmBtn.classList.add('sending');
-
-        // ── Replace YOUR_FORM_ID with your Formspree form ID ──
-        fetch('https://formspree.io/f/mzdklzeg', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            name: nameEl.value.trim(),
-            email: emailEl.value.trim(),
-            topic: topicEl.value.trim() || '(none)',
-            date: dateStr,
-            time: formatTime(selectedSlot),
-            _subject: 'Talk to Me: ' + nameEl.value.trim() + ' on ' + dateStr + ' at ' + formatTime(selectedSlot)
-          })
-        })
-        .then(res => {
-          if (res.ok) {
-            slotsPanel.innerHTML =
-              '<div class="cal-success">Booked!</div>' +
-              '<div class="cal-success-detail">' + dateStr + '<br>' + formatTime(selectedSlot) + '</div>' +
-              '<div class="cal-success-detail" style="margin-top:1rem">I\'ll follow up at <strong>' + emailEl.value.trim() + '</strong> to confirm.</div>';
-            selectedDate = null;
-            selectedSlot = null;
-            render();
-          } else {
-            throw new Error('Submission failed');
-          }
-        })
-        .catch(() => {
-          confirmBtn.disabled = false;
-          confirmBtn.textContent = 'Confirm Booking';
-          confirmBtn.classList.remove('sending');
-          errorEl.innerHTML = '<div class="cal-error">Something went wrong. Try again or email me directly.</div>';
-        });
-      });
+  function renderForm() {
+    if (!selectedSlot) {
+      formPanel.innerHTML = '';
+      return;
     }
+
+    const dateStr = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+
+    let html = '<div class="cal-form-group">';
+    html += '<div class="cal-slots-date" style="margin-bottom:1rem">' + dateStr + ' at ' + formatTime(selectedSlot) + '</div>';
+    html += '<label class="cal-form-label">Your name</label>';
+    html += '<input class="cal-form-field" type="text" id="bookName" placeholder="Jane Doe" required>';
+    html += '<label class="cal-form-label">Your email</label>';
+    html += '<input class="cal-form-field" type="email" id="bookEmail" placeholder="jane@example.com" required>';
+    html += '<label class="cal-form-label">What do you want to chat about? (optional)</label>';
+    html += '<input class="cal-form-field" type="text" id="bookTopic" placeholder="Quick intro, project idea, etc.">';
+    html += '<button class="cal-confirm" id="confirmBtn">Confirm Booking</button>';
+    html += '<div id="formError"></div>';
+    html += '</div>';
+
+    formPanel.innerHTML = html;
+
+    document.getElementById('confirmBtn').addEventListener('click', () => {
+      if (!selectedSlot || !selectedDate) return;
+
+      const nameEl = document.getElementById('bookName');
+      const emailEl = document.getElementById('bookEmail');
+      const topicEl = document.getElementById('bookTopic');
+      const errorEl = document.getElementById('formError');
+      const confirmBtn = document.getElementById('confirmBtn');
+
+      if (!nameEl.value.trim() || !emailEl.value.trim()) {
+        errorEl.innerHTML = '<div class="cal-error">Please fill in your name and email.</div>';
+        return;
+      }
+
+      const fullDateStr = selectedDate.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+      });
+
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Sending...';
+      confirmBtn.classList.add('sending');
+
+      fetch('https://formspree.io/f/mzdklzeg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          name: nameEl.value.trim(),
+          email: emailEl.value.trim(),
+          topic: topicEl.value.trim() || '(none)',
+          date: fullDateStr,
+          time: formatTime(selectedSlot),
+          _subject: 'Talk to Me: ' + nameEl.value.trim() + ' on ' + fullDateStr + ' at ' + formatTime(selectedSlot)
+        })
+      })
+      .then(res => {
+        if (res.ok) {
+          formPanel.innerHTML =
+            '<div class="cal-form-group">' +
+            '<div class="cal-success">Booked!</div>' +
+            '<div class="cal-success-detail">' + fullDateStr + '<br>' + formatTime(selectedSlot) + '</div>' +
+            '<div class="cal-success-detail" style="margin-top:1rem">I\'ll follow up at <strong>' + emailEl.value.trim() + '</strong> to confirm.</div>' +
+            '</div>';
+          selectedDate = null;
+          selectedSlot = null;
+          slotsPanel.innerHTML = '<div class="cal-placeholder">Select a date to see available times.</div>';
+          render();
+        } else {
+          throw new Error('Submission failed');
+        }
+      })
+      .catch(() => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Confirm Booking';
+        confirmBtn.classList.remove('sending');
+        errorEl.innerHTML = '<div class="cal-error">Something went wrong. Try again or email me directly.</div>';
+      });
+    });
   }
 
   function formatTime(t) {
