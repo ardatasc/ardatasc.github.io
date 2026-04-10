@@ -271,14 +271,24 @@
 
   @media (max-width: 700px) {
     .cal-container {
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr;
       padding: 0 1rem;
     }
     .cal-left {
-      min-width: unset;
+      display: contents;
+    }
+    .cal-header {
+      order: 1;
+    }
+    .cal-grid {
+      order: 2;
     }
     .cal-right {
-      flex: 1 1 100%;
+      order: 3;
+    }
+    #formPanel {
+      order: 4;
     }
     .cal-form-group {
       max-width: 100%;
@@ -323,14 +333,13 @@ ardatasc
         <button class="cal-nav" id="nextMonth">&rarr;</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
+      <div id="formPanel"></div>
     </div>
 
     <div class="cal-right" id="slotsPanel">
       <div class="cal-placeholder">Select a date to see available times.</div>
     </div>
   </div>
-
-  <div id="formPanel"></div>
 </div>
 
 <script>
